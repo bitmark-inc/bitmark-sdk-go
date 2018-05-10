@@ -58,7 +58,7 @@ func parseVars() {
 func toMedatadata() map[string]string {
 	parts := strings.Split(rawMetadata, ",")
 	metadata := make(map[string]string)
-	if len(parts) > 1 {
+	if len(parts) > 0 {
 		for _, part := range parts {
 			z := strings.Split(part, ":")
 			metadata[z[0]] = z[1]
