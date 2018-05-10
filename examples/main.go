@@ -157,26 +157,33 @@ func main() {
 		}
 		fmt.Println("Transaction ID: ", txId)
 	case "transfer-offer": // -bid=<bitmark id>
-		sender, _ := client.RestoreAccountFromSeed(senderSeed)
+		sender, _ := client.RestoreAccountFromSeed(receiverSeed)
 		fmt.Println("sender:", sender.AccountNumber())
-		receiver, _ := client.RestoreAccountFromSeed(receiverSeed)
+		receiver, _ := client.RestoreAccountFromSeed(senderSeed)
 		fmt.Println("receiver:", receiver.AccountNumber())
 
-		// sign by sender
-		offer, err := client.SignTransferOffer(sender, bitmarkId, receiver.AccountNumber(), true)
+		// signed by sender
+		offer, err := client.SignTransferOffer(sender, bitmarkId, receiver.AccountNumber(), false)
 		if err != nil {
 			panic(err)
 		}
-		data, _ := json.Marshal(offer)
-		fmt.Printf("transfer offer by sender: %s\n", string(data))
+		data, _ := json.MarshalIndent(offer, "", "  ")
+		fmt.Printf("transfer offer by sender: \n%s\n", string(data))
 
 		offerId, err := client.SubmitTransferOffer(sender, offer, map[string]interface{}{})
 		if err != nil {
 			panic(err)
 		}
-
 		fmt.Printf("transfer offer id: %s\n", offerId)
 
+		// countersigned by receiver
+		retrievedOffer, _ := client.GetTransferOffer(receiver, offerId)
+		countersignTransfer, _ := retrievedOffer.Record.Countersign(receiver)
+		txId, err := client.CountersignedTransfer(countersignTransfer)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("transaction id: ", txId)
 	case "download":
 		owner, _ := client.RestoreAccountFromSeed(ownerSeed)
 		fmt.Println("owner:", owner.AccountNumber())
