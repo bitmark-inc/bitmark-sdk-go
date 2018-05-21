@@ -217,6 +217,28 @@ func NewTransferRecord(txId string, receiver string, owner *Account) (*TransferR
 	return &TransferRecord{txId, receiver, signature}, nil
 }
 
+func (t TransferRecord) Id() (string, error) {
+	link, err := hex.DecodeString(t.Link)
+	if err != nil || len(link) != merkleDigestLength {
+		return "", ErrInvalidLength
+	}
+
+	sig, err := hex.DecodeString(t.Signature)
+	if err != nil {
+		return "", ErrInvalidLength
+	}
+
+	// pack and sign
+	message := toVarint64(transferUnratifiedTag)
+	message = appendBytes(message, link)
+	message = append(message, 0) // payment not supported
+	message = appendAccount(message, t.Owner)
+	message = appendBytes(message, sig)
+
+	txIndex := sha3.Sum256(message)
+	return hex.EncodeToString(txIndex[:]), nil
+}
+
 type TransferOfferRecord struct {
 	Bitmark   *Bitmark `json:"bitmark,omitempty"`
 	Link      string   `json:"link"`

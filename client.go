@@ -311,49 +311,58 @@ func (c *Client) DownloadAsset(acct *Account, bitmarkId string) (string, []byte,
 	return fileName, plaintext, nil
 }
 
-func (c *Client) RentBitmark(lessor *Account, bitmarkId, receiver string, days uint) error {
-	access, err := c.service.getAssetAccess(lessor, bitmarkId)
+func (c *Client) GrantAssetAccess(acct *Account, bitmarkId, to string, startAt int64, duration Duration) (*AccessGrant, error) {
+	access, err := c.service.getAssetAccess(acct, bitmarkId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if access.SessData == nil {
-		return errors.New("no need to rent public assets")
+		return nil, errors.New("no need to grant access on public asset")
 	}
 
-	dataKey, err := dataKeyFromSessionData(lessor, access.SessData, lessor.EncrKey.PublicKeyBytes())
+	dataKey, err := dataKeyFromSessionData(acct, access.SessData, acct.EncrKey.PublicKeyBytes())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	recipientEncrPubkey, err := c.service.getEncPubkey(receiver)
+	recipientEncrPubkey, err := c.service.getEncPubkey(to)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	data, err := createSessionData(lessor, dataKey, recipientEncrPubkey)
+	data, err := createSessionData(acct, dataKey, recipientEncrPubkey)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return c.service.updateLease(lessor, bitmarkId, receiver, days, data)
+	return c.service.createAccessGrant(acct, bitmarkId, to, data, startAt, duration)
 }
 
-func (c *Client) ListLeases(renter *Account) ([]accessByRenting, error) {
-	return c.service.listLeases(renter)
+func (c *Client) RevokeAssetAccess(acct *Account, grantId string) error {
+	return c.service.deleteAccessGrant(acct, grantId)
 }
 
-func (c *Client) DownloadAssetByLease(acct *Account, access *accessByRenting) ([]byte, error) {
+func (c *Client) ListGrantedAssetAccess(accountNumber, direction string) ([]*AccessGrant, error) {
+	return c.service.queryAccessGrant(accountNumber, direction)
+}
+
+func (c *Client) DownloadAssetByGrant(acct *Account, grantId string) ([]byte, error) {
+	access, err := c.service.getAccessGrant(acct, grantId)
+	if err != nil {
+		return nil, err
+	}
+
 	_, content, err := c.service.getAssetContent(access.URL)
 	if err != nil {
 		return nil, err
 	}
 
-	encrPubkey, err := acct.api.getEncPubkey(access.Owner)
+	encrPubkey, err := c.service.getEncPubkey(access.From)
 	if err != nil {
 		return nil, fmt.Errorf("fail to get enc public key: %s", err.Error())
 	}
 
-	dataKey, err := dataKeyFromSessionData(acct, access.SessData, encrPubkey)
+	dataKey, err := dataKeyFromSessionData(acct, access.SessionData, encrPubkey)
 	if err != nil {
 		return nil, err
 	}

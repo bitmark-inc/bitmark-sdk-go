@@ -195,5 +195,36 @@ func main() {
 		}
 		fmt.Println("File Name:", fileName)
 		fmt.Println("File Content:", string(content))
+	case "grant-access":
+		owner, _ := client.RestoreAccountFromSeed(senderSeed)
+		fmt.Println("owner:", owner.AccountNumber())
+
+		user, _ := client.RestoreAccountFromSeed(receiverSeed)
+		fmt.Println("user:", user.AccountNumber())
+
+		grant, _ := client.GrantAssetAccess(
+			owner,
+			bitmarkId,
+			user.AccountNumber(),
+			time.Now().Unix(),
+			sdk.Duration{Years: 0, Months: 0, Days: 1})
+		fmt.Println("access grant ID:", grant.Id)
+
+		grants, _ := client.ListGrantedAssetAccess(owner.AccountNumber(), "from")
+		for _, grant := range grants {
+			fmt.Println("grant access to", grant.To, "until", grant.EndAt)
+		}
+
+		grants, _ = client.ListGrantedAssetAccess(user.AccountNumber(), "to")
+		for _, grant := range grants {
+			fmt.Println("get access from", grant.From, "until", grant.EndAt)
+		}
+
+		data, _ := client.DownloadAssetByGrant(user, grant.Id)
+		fmt.Println("asset content:", string(data))
+
+		client.RevokeAssetAccess(owner, grant.Id)
+		_, err := client.DownloadAssetByGrant(user, grant.Id)
+		fmt.Println(err)
 	}
 }

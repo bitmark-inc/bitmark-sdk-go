@@ -10,6 +10,7 @@ import (
 	"mime"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -317,27 +318,50 @@ func (s *Service) getBitmark(bitmarkId string) (*Bitmark, error) {
 	return result.Bitmark, err
 }
 
-func (s *Service) updateLease(acct *Account, bitmarkId, renter string, days uint, data *SessionData) error {
+func (s *Service) createAccessGrant(acct *Account, bitmarkId, to string, sessionData *SessionData, startAt int64, duration Duration) (*AccessGrant, error) {
 	body := toJSONRequestBody(map[string]interface{}{
-		"renter":       renter,
-		"days":         days,
-		"session_data": data,
+		"bitmark_id":   bitmarkId,
+		"to":           to,
+		"session_data": sessionData,
+		"start_at":     startAt,
+		"duration":     duration,
 	})
-	req, _ := s.newSignedAPIRequest("POST", "/v2/leases/"+bitmarkId, body, acct, "updateLease", bitmarkId)
+
+	req, _ := s.newSignedAPIRequest("POST", "/v2/access-grants", body, acct, "accessGrant", bitmarkId)
+
+	var grant AccessGrant
+	_, err := s.submitRequest(req, &grant)
+	return &grant, err
+}
+
+func (s *Service) deleteAccessGrant(acct *Account, grantId string) error {
+	req, _ := s.newSignedAPIRequest("DELETE", "/v2/access-grants/"+grantId, nil, acct, "accessGrant", grantId)
 
 	_, err := s.submitRequest(req, nil)
 	return err
 }
 
-func (s *Service) listLeases(acct *Account) ([]accessByRenting, error) {
-	req, _ := s.newSignedAPIRequest("POST", "/v2/leases", nil, acct, "listLeases", "")
+func (s *Service) queryAccessGrant(accountNumber, direction string) ([]*AccessGrant, error) {
+	v := url.Values{}
+	v.Set("account", accountNumber)
+	v.Set("direction", direction)
+	req, _ := s.newAPIRequest("GET", "/v2/access-grants?"+v.Encode(), nil)
 
 	var result struct {
-		Leases []accessByRenting `json:"leases"`
+		Grants []*AccessGrant `json:"access_grants"`
 	}
 	_, err := s.submitRequest(req, &result)
 
-	return result.Leases, err
+	return result.Grants, err
+}
+
+func (s *Service) getAccessGrant(acct *Account, grantId string) (*AccessGrant, error) {
+	req, _ := s.newSignedAPIRequest("GET", "/v2/access-grants/"+grantId, nil, acct, "accessGrant", grantId)
+
+	var grant AccessGrant
+	_, err := s.submitRequest(req, &grant)
+
+	return &grant, err
 }
 
 func toJSONReqBody(data map[string]interface{}) io.Reader {
