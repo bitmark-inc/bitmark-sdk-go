@@ -196,34 +196,42 @@ func main() {
 		fmt.Println("File Name:", fileName)
 		fmt.Println("File Content:", string(content))
 	case "grant-access":
+		//Obtain Account that will grant its access right
 		owner, _ := client.RestoreAccountFromSeed(senderSeed)
 		fmt.Println("owner:", owner.AccountNumber())
-
+		//Obtain Account that will be granted access from owner
 		user, _ := client.RestoreAccountFromSeed(receiverSeed)
 		fmt.Println("user:", user.AccountNumber())
 
+		//Request granting access of an asset
 		grant, _ := client.GrantAssetAccess(
-			owner,
-			bitmarkId,
-			user.AccountNumber(),
-			time.Now().Unix(),
-			sdk.Duration{Years: 0, Months: 0, Days: 1})
+			owner,                                      // owner account
+			bitmarkId,                                  // bitmark ID of asset to be transfered
+			user.AccountNumber(),                       // receiver account
+			time.Now().Unix(),                          // time to start granting access
+			sdk.Duration{Years: 0, Months: 0, Days: 1}) // time to stop granting access
 		fmt.Println("access grant ID:", grant.Id)
 
+		// Check an account's access grant access list.
+		// direction "from" means the function will return a list of AccessGrants to which the account grants
 		grants, _ := client.ListGrantedAssetAccess(owner.AccountNumber(), "from")
 		for _, grant := range grants {
 			fmt.Println("grant access to", grant.To, "until", grant.EndAt)
 		}
 
+		// Check an account's access grant access list.
+		// direction "to"  means the function will return a list of AccessGrants which the account is granted by other accounts
 		grants, _ = client.ListGrantedAssetAccess(user.AccountNumber(), "to")
 		for _, grant := range grants {
 			fmt.Println("get access from", grant.From, "until", grant.EndAt)
 		}
 
+		// Download data from grant ID.
 		data, _ := client.DownloadAssetByGrant(user, grant.Id)
 		fmt.Println("asset content:", string(data))
-
+		// Cancels the access grant
 		client.RevokeAssetAccess(owner, grant.Id)
+		// After cancellation, try to download asset. This should be failed
 		_, err := client.DownloadAssetByGrant(user, grant.Id)
 		fmt.Println(err)
 	}
