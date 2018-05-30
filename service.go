@@ -222,8 +222,21 @@ func (s *Service) submitTransferOffer(acct *Account, record *TransferOfferRecord
 	return result["offer_id"], nil
 }
 
-func (s *Service) getTransferOffer(acct *Account, offerId string) (*TransferOffer, error) {
-	req, _ := s.newAPIRequest("GET", fmt.Sprintf("/v2/transfer_offers?requester=%s&offer_id=%s", acct.AccountNumber(), offerId), nil)
+func (s *Service) getTransferOfferByAccount(acct *Account) (map[string][]*TransferOffer, error) {
+	req, _ := s.newAPIRequest("GET", fmt.Sprintf("/v2/transfer_offers?requester=%s", acct.AccountNumber()), nil)
+
+	var result struct {
+		Offers map[string][]*TransferOffer `json:"offers"`
+	}
+
+	if _, err := s.submitRequest(req, &result); err != nil {
+		return nil, err
+	}
+	return result.Offers, nil
+}
+
+func (s *Service) getTransferOfferById(offerId string) (*TransferOffer, error) {
+	req, _ := s.newAPIRequest("GET", fmt.Sprintf("/v2/transfer_offers?offer_id=%s", offerId), nil)
 
 	var result struct {
 		Offer *TransferOffer `json:"offer"`

@@ -258,8 +258,12 @@ func (c *Client) SubmitTransferOffer(sender *Account, t *TransferOfferRecord, ex
 	return c.service.submitTransferOffer(sender, t, extraInfo)
 }
 
-func (c *Client) GetTransferOffer(acct *Account, offerId string) (*TransferOffer, error) {
-	return c.service.getTransferOffer(acct, offerId)
+func (c *Client) GetTransferOfferByAccount(acct *Account) (map[string][]*TransferOffer, error) {
+	return c.service.getTransferOfferByAccount(acct)
+}
+
+func (c *Client) GetTransferOfferById(offerId string) (*TransferOffer, error) {
+	return c.service.getTransferOfferById(offerId)
 }
 
 func (c *Client) CompleteTransferOffer(receiver *Account, offerId, action, countersignature string) (string, error) {
