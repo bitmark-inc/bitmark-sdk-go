@@ -292,6 +292,9 @@ func (c *Client) DownloadAsset(acct *Account, bitmarkId string) (string, []byte,
 	if err != nil {
 		return "", nil, err
 	}
+	if fileName == "" {
+		fileName = bitmarkId
+	}
 
 	if access.SessData == nil { // public asset
 		return fileName, content, nil

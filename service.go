@@ -144,8 +144,12 @@ func (s *Service) getAssetContent(url string) (string, []byte, error) {
 	}
 	defer resp.Body.Close()
 
-	_, params, _ := mime.ParseMediaType(resp.Header["Content-Disposition"][0])
-	filename := params["filename"]
+	var filename string
+	_, params, err := mime.ParseMediaType(resp.Header.Get("Content-Disposition"))
+	name, ok := params["filename"]
+	if err == nil && ok {
+		filename = name
+	}
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
