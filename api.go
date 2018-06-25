@@ -59,10 +59,10 @@ func NewAPIClient(network Network, client *http.Client) *APIClient {
 	switch network {
 	case Testnet:
 		api.apiServer = "api.test.bitmark.com"
-		api.assetServer = "assets.test.bitmark.com"
+		api.assetServer = "test.bitmarkaccountassets.com"
 	case Livenet:
 		api.apiServer = "api.bitmark.com"
-		api.assetServer = "assets.bitmark.com"
+		api.assetServer = "bitmarkaccountassets.com"
 	}
 
 	return api
