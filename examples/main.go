@@ -71,10 +71,8 @@ func main() {
 	parseVars()
 
 	cfg := &sdk.Config{
-		HTTPClient:  &http.Client{Timeout: 5 * time.Second},
-		Network:     "testnet",
-		APIEndpoint: "https://api.test.bitmark.com",
-		KeyEndpoint: "https://key.assets.test.bitmark.com",
+		HTTPClient: &http.Client{Timeout: 5 * time.Second},
+		Network:    "testnet",
 	}
 	client = sdk.NewClient(cfg)
 
@@ -177,7 +175,7 @@ func main() {
 		fmt.Printf("transfer offer id: %s\n", offerId)
 
 		// countersigned by receiver
-		retrievedOffer, _ := client.GetTransferOffer(receiver, offerId)
+		retrievedOffer, _ := client.GetTransferOfferById(offerId)
 		countersignTransfer, _ := retrievedOffer.Record.Countersign(receiver)
 		txId, err := client.CountersignedTransfer(countersignTransfer)
 		if err != nil {
