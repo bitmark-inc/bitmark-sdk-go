@@ -1,4 +1,4 @@
-package bitmarksdk
+package account
 
 import (
 	"bytes"
@@ -46,7 +46,6 @@ type AuthKey interface {
 
 type ED25519AuthKey struct {
 	privateKey ed25519.PrivateKey
-	test       bool
 }
 
 func (e ED25519AuthKey) PrivateKeyBytes() []byte {
@@ -65,17 +64,14 @@ func (e ED25519AuthKey) Sign(message []byte) []byte {
 	return ed25519.Sign(e.PrivateKeyBytes(), message)
 }
 
-func NewAuthKey(s *Seed) (AuthKey, error) {
-	var seedCore = new([32]byte)
-	copy(seedCore[:], s.core)
-	authSeed := secretbox.Seal([]byte{}, authSeedCount[:], &seedNonce, seedCore)
+func NewAuthKey(core *[32]byte) (AuthKey, error) {
+	authSeed := secretbox.Seal([]byte{}, authSeedCount[:], &seedNonce, core)
 
 	// switch s.version to determine which algorithm to generate auth key
 	// if more versions are supported in the future
 	_, privateKey, err := ed25519.GenerateKey(bytes.NewBuffer(authSeed))
 	return ED25519AuthKey{
 		privateKey,
-		s.network == Testnet,
 	}, err
 }
 
@@ -130,10 +126,8 @@ func (c CURVE25519EncrKey) Decrypt(ciphertext []byte, peerPublicKey []byte) ([]b
 	return plaintext, nil
 }
 
-func NewEncrKey(s *Seed) (EncrKey, error) {
-	var seedCore = new([32]byte)
-	copy(seedCore[:], s.core)
-	encrSeed := secretbox.Seal([]byte{}, encrSeedCount[:], &seedNonce, seedCore)
+func NewEncrKey(core *[32]byte) (EncrKey, error) {
+	encrSeed := secretbox.Seal([]byte{}, encrSeedCount[:], &seedNonce, core)
 
 	// switch s.version to determine which algorithm to generate auth key
 	// if more versions are supported in the future

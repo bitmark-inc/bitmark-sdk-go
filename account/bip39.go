@@ -1,4 +1,4 @@
-package bitmarksdk
+package account
 
 var bip39 = []string{
 	"abandon",

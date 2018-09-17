@@ -1,4 +1,4 @@
-package bitmarksdk
+package account
 
 import (
 	"fmt"
@@ -9,7 +9,6 @@ var masks = []int{0, 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023}
 
 // convert a binary of 33 bytes to a phrase of 24 worhs
 func bytesToPhrase(input []byte) ([]string, error) {
-
 	if 33 != len(input) {
 		return nil, fmt.Errorf("input length: %d expected: 33", len(input))
 	}
@@ -18,13 +17,13 @@ func bytesToPhrase(input []byte) ([]string, error) {
 	accumulator := 0
 	bits := 0
 	n := 0
-	for i := 0; i < len(input); i += 1 {
+	for i := 0; i < len(input); i++ {
 		accumulator = accumulator<<8 + int(input[i])
 		bits += 8
 		if bits >= 11 {
 			bits -= 11 // [ 11 bits] [offset bits]
 
-			n += 1
+			n++
 			index := accumulator >> uint(bits)
 			accumulator &= masks[bits]
 			word := bip39[index]
@@ -39,7 +38,6 @@ func bytesToPhrase(input []byte) ([]string, error) {
 
 // array of words to 33 bytes
 func phraseToBytes(words []string) ([]byte, error) {
-
 	if 24 != len(words) {
 		return nil, fmt.Errorf("number of words: %d expected: 24", len(words))
 	}

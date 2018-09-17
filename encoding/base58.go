@@ -1,4 +1,4 @@
-package bitmarksdk
+package encoding
 
 import (
 	"math/big"
@@ -10,7 +10,7 @@ const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 var bigRadix = big.NewInt(58)
 var bigZero = big.NewInt(0)
 
-func fromBase58(b string) []byte {
+func FromBase58(b string) []byte {
 	answer := big.NewInt(0)
 	j := big.NewInt(1)
 
@@ -43,7 +43,7 @@ loop:
 	return val
 }
 
-func toBase58(b []byte) string {
+func ToBase58(b []byte) string {
 	x := new(big.Int)
 	x.SetBytes(b)
 
