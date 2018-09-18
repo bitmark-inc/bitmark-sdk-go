@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -37,10 +38,12 @@ var (
 )
 
 func init() {
+	network := os.Getenv("SDK_TEST_NETWORK")
+	token := os.Getenv("SDK_TEST_API_TOKEN")
 	cfg := &sdk.Config{
 		HTTPClient: http.DefaultClient,
-		Network:    "testnet",
-		APIToken:   "bmk-lljpzkhqdkzmblhg",
+		Network:    sdk.Network(network),
+		APIToken:   token,
 	}
 	sdk.Init(cfg)
 

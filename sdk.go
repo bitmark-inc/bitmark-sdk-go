@@ -3,8 +3,8 @@ package bitmarksdk
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 )
@@ -26,6 +26,15 @@ const (
 	Livenet = Network("livent")
 	Testnet = Network("testnet")
 )
+
+type APIError struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
+func (ae *APIError) Error() string {
+	return fmt.Sprintf("[%d] %s", ae.Code, ae.Message)
+}
 
 func Init(cfg *Config) {
 	config = cfg
@@ -86,12 +95,12 @@ func (s *BackendImplementation) Do(req *http.Request, v interface{}) error {
 	}
 
 	if resp.StatusCode >= 400 {
-		// TODO: parse error
-		data, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return errors.New("failed to parse api response")
+		var aerr APIError
+		if err := json.NewDecoder(resp.Body).Decode(&aerr); err != nil {
+			return errors.New("unexpected api response")
 		}
-		return errors.New(string(data))
+
+		return &aerr
 	}
 
 	if v != nil {
