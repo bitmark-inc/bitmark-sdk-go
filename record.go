@@ -81,7 +81,7 @@ func NewAssetRecord(name, fingerprint string, metadata map[string]string, regist
 }
 
 type IssueRecord struct {
-	AssetIndex string `json:"assetId"`
+	AssetIndex string `json:"asset"`
 	Owner      string `json:"owner"`
 	Nonce      uint64 `json:"nonce"`
 	Signature  string `json:"signature"`
