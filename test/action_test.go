@@ -22,9 +22,6 @@ type assetRegistrationTestCase struct {
 }
 
 var (
-	senderSeed   = "5XEECttxvRBzxzAmuV4oh6T1FcQu4mBg8eWd9wKbf8hweXsfwtJ8sfH"
-	receiverSeed = "5XEECt4yuMK4xqBLr9ky5FBWpkAR6VHNZSz8fUzZDXPnN3D9MeivTSA"
-
 	sender   *account.Account
 	receiver *account.Account
 
@@ -47,8 +44,8 @@ func init() {
 	}
 	sdk.Init(cfg)
 
-	sender, _ = account.FromSeed(senderSeed)
-	receiver, _ = account.FromSeed(receiverSeed)
+	sender, _ = account.FromSeed(os.Getenv("SENDER_SEED"))
+	receiver, _ = account.FromSeed(os.Getenv("RECEIVER_SEED"))
 }
 
 // This test case will try to register the same asset three times
