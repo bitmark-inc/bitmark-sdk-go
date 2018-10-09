@@ -23,7 +23,7 @@ var (
 type Network string
 
 const (
-	Livenet = Network("livent")
+	Livenet = Network("livenet")
 	Testnet = Network("testnet")
 )
 
