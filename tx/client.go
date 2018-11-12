@@ -37,6 +37,21 @@ func Get(txId string, loadAsset bool) (*Tx, error) {
 	return result.Tx, nil
 }
 
+func List(builder *QueryParamsBuilder) ([]*Tx, error) {
+	txs := make([]*Tx, 0)
+	it := NewIterator(builder)
+	for it.Before() {
+		for _, t := range it.Values() {
+			txs = append(txs, t)
+		}
+	}
+	if it.Err() != nil {
+		return nil, it.Err()
+	}
+
+	return txs, nil
+}
+
 type APIResultIterator struct {
 	builder *QueryParamsBuilder
 	current int

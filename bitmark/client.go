@@ -120,6 +120,21 @@ func Get(bitmarkId string, loadAsset bool) (*Bitmark, error) {
 	return result.Bitmark, nil
 }
 
+func List(builder *QueryParamsBuilder) ([]*Bitmark, error) {
+	bitmarks := make([]*Bitmark, 0)
+	it := NewIterator(builder)
+	for it.Before() {
+		for _, b := range it.Values() {
+			bitmarks = append(bitmarks, b)
+		}
+	}
+	if it.Err() != nil {
+		return nil, it.Err()
+	}
+
+	return bitmarks, nil
+}
+
 type Iterator interface {
 	Before() bool
 	After() bool

@@ -56,6 +56,21 @@ func Get(assetId string) (*Asset, error) {
 	return result.Asset, nil
 }
 
+func List(builder *QueryParamsBuilder) ([]*Asset, error) {
+	assets := make([]*Asset, 0)
+	it := NewIterator(builder)
+	for it.Before() {
+		for _, a := range it.Values() {
+			assets = append(assets, a)
+		}
+	}
+	if it.Err() != nil {
+		return nil, it.Err()
+	}
+
+	return assets, nil
+}
+
 type Iterator interface {
 	Before() bool
 	After() bool

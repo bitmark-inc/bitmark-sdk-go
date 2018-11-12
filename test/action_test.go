@@ -180,7 +180,7 @@ func cancelOffer(bid string) error {
 		return errors.New("bitmark is not offering")
 	}
 
-	rp := bitmark.NewResponseParams(bmk, "cancel")
+	rp := bitmark.NewTransferResponseParams(bmk, "cancel")
 	rp.Sign(sender)
 	if err := bitmark.Respond(rp); err != nil {
 		return err
@@ -201,7 +201,7 @@ func rejectOffer(bid string) error {
 	}
 
 	// receiver rejects the offer
-	rp := bitmark.NewResponseParams(bmk, "reject")
+	rp := bitmark.NewTransferResponseParams(bmk, "reject")
 	rp.Sign(receiver)
 
 	if err := bitmark.Respond(rp); err != nil {
@@ -222,7 +222,7 @@ func acceptOffer(bid string) error {
 	}
 
 	// receiver wants to accept the offer
-	rp := bitmark.NewResponseParams(bmk, "accept")
+	rp := bitmark.NewTransferResponseParams(bmk, "accept")
 	rp.Sign(receiver)
 	if err := bitmark.Respond(rp); err != nil {
 		return err

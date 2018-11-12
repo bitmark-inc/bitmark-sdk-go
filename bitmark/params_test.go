@@ -95,7 +95,7 @@ func TestOfferParams(t *testing.T) {
 }
 
 func TestResponseParams(t *testing.T) {
-	params := NewResponseParams(&Bitmark{
+	params := NewTransferResponseParams(&Bitmark{
 		Offer: &TransferOffer{
 			Id: "d205ed72-792f-43ca-885a-737949be6501",
 			Record: &CountersignedTransferRequest{

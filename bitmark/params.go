@@ -186,7 +186,7 @@ type ResponseParams struct {
 	record           *CountersignedTransferRequest
 }
 
-func NewResponseParams(bitmark *Bitmark, action string) *ResponseParams {
+func NewTransferResponseParams(bitmark *Bitmark, action string) *ResponseParams {
 	return &ResponseParams{
 		Id:     bitmark.Offer.Id,
 		Action: action,

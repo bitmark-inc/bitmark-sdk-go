@@ -28,7 +28,7 @@ func TestGetAsset(t *testing.T) {
 		Registrant:  "eTicVBQqmGzxNMGiZGtKzDdufXZsiFKH3SR8FcVYM7MQTZ47k3",
 		Status:      "confirmed",
 		BlockNumber: 8696,
-		Sequence:    9278,
+		Sequence:    8631,
 		CreatedAt:   createdAt,
 	}
 	if !reflect.DeepEqual(actual, expected) {
@@ -46,22 +46,20 @@ func TestGetNonExsitingAsset(t *testing.T) {
 func TestListAsset(t *testing.T) {
 	builder := asset.NewQueryParamsBuilder().RegisteredBy("epX3bZVM3g87BfNvbK5r4cizPX6Mkyvod4vLQFdDemZvWsxiGr").Limit(10)
 
-	it := asset.NewIterator(builder)
-	for it.Before() {
-		for _, a := range it.Values() {
-			printBeautifulJSON(t, a)
-		}
+	assets, err := asset.List(builder)
+	if err != nil {
+		t.Error(err)
 	}
-	if it.Err() != nil {
-		t.Error(it.Err())
+
+	for _, a := range assets {
+		printBeautifulJSON(t, a)
 	}
 }
 
 func TestListNonExsitingAssets(t *testing.T) {
 	builder := asset.NewQueryParamsBuilder().RegisteredBy("epX3bZVM3g87BfNvbK5r4cizP").Limit(10)
-
-	it := asset.NewIterator(builder)
-	if it.Before() {
+	assets, _ := asset.List(builder)
+	if len(assets) > 0 {
 		t.Errorf("should return empty assets")
 	}
 }
@@ -88,26 +86,26 @@ func TestListBitmark(t *testing.T) {
 		LoadAsset(true).
 		Limit(10)
 
-	it := bitmark.NewIterator(builder)
-	for it.Before() {
-		for _, b := range it.Values() {
-			printBeautifulJSON(t, b)
-		}
+	bitmarks, err := bitmark.List(builder)
+	if err != nil {
+		t.Error(err)
 	}
-	if it.Err() != nil {
-		t.Error(it.Err())
+
+	for _, b := range bitmarks {
+		printBeautifulJSON(t, b)
 	}
 }
 
 func TestListNonExsitingBitmarks(t *testing.T) {
-	builder := tx.NewQueryParamsBuilder().ReferencedAsset("1f21148a273b5e63773ceee976a84bcd014d88ac2c18a29cac4442120b430e15").Limit(10)
+	builder := bitmark.NewQueryParamsBuilder().ReferencedAsset("1f21148a273b5e63773ceee976a84bcd014d88ac2c18a29cac4442120b430e15").Limit(10)
 
-	it := tx.NewIterator(builder)
-	if it.Before() {
-		t.Errorf("should return empty bitmarks")
+	bitmarks, err := bitmark.List(builder)
+	if err != nil {
+		t.Error(err)
 	}
-	if it.Err() != nil {
-		t.Error(it.Err())
+
+	if len(bitmarks) > 0 {
+		t.Errorf("should return empty bitmarks")
 	}
 }
 func TestGetTx(t *testing.T) {
@@ -124,7 +122,7 @@ func TestGetTx(t *testing.T) {
 		Owner:       "e1pFRPqPhY2gpgJTpCiwXDnVeouY9EjHY6STtKwdN6Z4bp4sog",
 		Status:      "confirmed",
 		BlockNumber: 8668,
-		Sequence:    740331,
+		Sequence:    728970,
 	}
 	if !reflect.DeepEqual(actual, expected) {
 		t.Fatalf("incorrect asset record:\nactual=%+v\nexpected=%+v", actual, expected)
@@ -145,26 +143,26 @@ func TestListProvenance(t *testing.T) {
 		LoadAsset(true).
 		Limit(10)
 
-	it := tx.NewIterator(builder)
-	for it.Before() {
-		for _, tx := range it.Values() {
-			printBeautifulJSON(t, tx)
-		}
+	txs, err := tx.List(builder)
+	if err != nil {
+		t.Error(err)
 	}
-	if it.Err() != nil {
-		t.Error(it.Err())
+
+	for _, tx := range txs {
+		printBeautifulJSON(t, tx)
 	}
 }
 
 func TestListNonExsitingTxs(t *testing.T) {
 	builder := tx.NewQueryParamsBuilder().ReferencedBitmark("2bc5189e77b55f8f671c62cb46650c3b").Limit(10)
 
-	it := tx.NewIterator(builder)
-	if it.Before() {
-		t.Errorf("should return empty txs")
+	txs, err := tx.List(builder)
+	if err != nil {
+		t.Error(err)
 	}
-	if it.Err() != nil {
-		t.Error(it.Err())
+
+	if len(txs) > 0 {
+		t.Errorf("should return empty txs")
 	}
 }
 
