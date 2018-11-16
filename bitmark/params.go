@@ -58,14 +58,14 @@ func NewIssuanceParams(assetId string, options QuantityOptions) *IssuanceParams 
 }
 
 // Sign all issunaces in a batch
-func (p *IssuanceParams) Sign(issuer *account.Account) error {
+func (p *IssuanceParams) Sign(issuer account.Account) error {
 	for _, issuance := range p.Issuances {
 		issuance.Owner = issuer.AccountNumber()
 		message, err := utils.Pack(issuance)
 		if err != nil {
 			return err
 		}
-		issuance.Signature = hex.EncodeToString(issuer.AuthKey.Sign(message))
+		issuance.Signature = hex.EncodeToString(issuer.Sign(message))
 	}
 
 	return nil
@@ -114,12 +114,12 @@ func (t *TransferParams) FromLatestTx(txId string) {
 	t.Transfer.Link = txId
 }
 
-func (t *TransferParams) Sign(sender *account.Account) error {
+func (t *TransferParams) Sign(sender account.Account) error {
 	message, err := utils.Pack(t.Transfer)
 	if err != nil {
 		return err
 	}
-	t.Transfer.Signature = hex.EncodeToString(sender.AuthKey.Sign(message))
+	t.Transfer.Signature = hex.EncodeToString(sender.Sign(message))
 	return nil
 }
 
@@ -161,12 +161,12 @@ func (o *OfferParams) FromLatestTx(txId string) {
 	o.Offer.Transfer.Link = txId
 }
 
-func (o *OfferParams) Sign(sender *account.Account) error {
+func (o *OfferParams) Sign(sender account.Account) error {
 	message, err := utils.Pack(o.Offer.Transfer)
 	if err != nil {
 		return err
 	}
-	o.Offer.Transfer.Signature = hex.EncodeToString(sender.AuthKey.Sign(message))
+	o.Offer.Transfer.Signature = hex.EncodeToString(sender.Sign(message))
 	return nil
 }
 
@@ -195,7 +195,7 @@ func NewTransferResponseParams(bitmark *Bitmark, action string) *ResponseParams 
 	}
 }
 
-func (r *ResponseParams) Sign(acct *account.Account) error {
+func (r *ResponseParams) Sign(acct account.Account) error {
 	ts := strconv.FormatInt(time.Now().UnixNano()/1000000, 10)
 	parts := []string{
 		"updateOffer",
@@ -204,7 +204,7 @@ func (r *ResponseParams) Sign(acct *account.Account) error {
 		ts,
 	}
 	message := strings.Join(parts, "|")
-	sig := hex.EncodeToString(acct.AuthKey.Sign([]byte(message)))
+	sig := hex.EncodeToString(acct.Sign([]byte(message)))
 
 	r.auth.Add("requester", acct.AccountNumber())
 	r.auth.Add("timestamp", ts)
@@ -215,7 +215,7 @@ func (r *ResponseParams) Sign(acct *account.Account) error {
 		if err != nil {
 			return err
 		}
-		r.Countersignature = hex.EncodeToString(acct.AuthKey.Sign(message))
+		r.Countersignature = hex.EncodeToString(acct.Sign(message))
 	}
 	return nil
 }

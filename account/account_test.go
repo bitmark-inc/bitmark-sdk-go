@@ -10,73 +10,154 @@ import (
 )
 
 type valid struct {
-	seed   string
-	phrase string
+	seed          string
+	phrases       []string
+	accountNumber string
+	network       sdk.Network
 }
 
 var (
-	testnetData = valid{
-		"5XEECt18HGBGNET1PpxLhy5CsCLG9jnmM6Q8QGF4U2yGb1DABXZsVeD",
-		"accident syrup inquiry you clutch liquid fame upset joke glow best school repeat birth library combine access camera organ trial crazy jeans lizard science",
+	testnetAccount = valid{
+		"9J87CAsHdFdoEu6N1unZk3sqhVBkVL8Z8",
+		[]string{
+			"name gaze apart lamp lift zone believe steak session laptop crowd hill",
+			"箱 阻 起 歸 徹 矮 問 栽 瓜 鼓 支 樂",
+		},
+		"eMCcmw1SKoohNUf3LeioTFKaYNYfp2bzFYpjm3EddwxBSWYVCb",
+		sdk.Testnet,
 	}
 
-	livenetData = valid{
-		"5XEECqWqA47qWg86DR5HJ29HhbVqwigHUAhgiBMqFSBycbiwnbY639s",
-		"ability panel leave spike mixture token voice certain today market grief crater cruise smart camera palm wheat rib swamp labor bid rifle piano glass",
+	livenetAccount = valid{
+		"9J87GaPq7FR9Uacdi3FUoWpP6LbEpo1Ax",
+		[]string{
+			"surprise mesh walk inject height join sound minor margin over jewel venue",
+			"薯 托 劍 景 擔 額 牢 痛 亦 軟 凱 誼",
+		},
+		"aiKFA9dKkNHPys3nSZrLTPusoocPqXSFp5EexsgQ1hbYUrJVne",
+		sdk.Livenet,
 	}
+
+	testnetDeprecatedAccount = valid{
+		"5XEECt18HGBGNET1PpxLhy5CsCLG9jnmM6Q8QGF4U2yGb1DABXZsVeD",
+		[]string{
+			"accident syrup inquiry you clutch liquid fame upset joke glow best school repeat birth library combine access camera organ trial crazy jeans lizard science",
+		},
+		"ec6yMcJATX6gjNwvqp8rbc4jNEasoUgbfBBGGyV5NvoJ54NXva",
+		sdk.Testnet,
+	}
+
+	livenetDeprecatedAccount = valid{
+		"5XEECqWqA47qWg86DR5HJ29HhbVqwigHUAhgiBMqFSBycbiwnbY639s",
+		[]string{
+			"ability panel leave spike mixture token voice certain today market grief crater cruise smart camera palm wheat rib swamp labor bid rifle piano glass",
+		},
+		"bDnC8nCaupb1AQtNjBoLVrGmobdALpBewkyYRG7kk2euMG93Bf",
+		sdk.Livenet,
+	}
+
+	langCheckSequence = []string{"en", "zh-TW"}
 )
 
+func check(t *testing.T, a Account, data valid) {
+	if a.Seed() != data.seed {
+		t.Fatalf("invalid seed: expected = %s, actual = %s", testnetAccount.seed, a.Seed())
+	}
+
+	for i, p := range data.phrases {
+		phrase := strings.Join(a.RecoveryPhrase(langCheckSequence[i]), " ")
+		if phrase != data.phrases[i] {
+			t.Fatalf("invalid recovery phrase: expected = %s, actual = %s", p, phrase)
+		}
+	}
+
+	if a.AccountNumber() != data.accountNumber {
+		t.Fatalf("invalid account number: expected = %s, actual = %s", data.accountNumber, a.AccountNumber())
+	}
+
+	if a.Network() != data.network {
+		t.Fatalf("invalid network: expected = %s, actual = %s", data.network, a.Network())
+	}
+}
+
 func TestTestnetAccount(t *testing.T) {
-	acct1, _ := FromSeed(testnetData.seed)
-	if acct1.Network() != sdk.Testnet {
-		t.Fail()
-	}
+	sdk.Init(&sdk.Config{Network: sdk.Testnet})
 
-	acct2, _ := FromRecoveryPhrase(strings.Split(testnetData.phrase, " "))
-	if acct2.Network() != sdk.Testnet {
-		t.Fail()
+	acctFromSeed, err := FromSeed(testnetAccount.seed)
+	if err != nil {
+		t.Fatalf("failed to recover from seed: %s", err)
 	}
+	check(t, acctFromSeed, testnetAccount)
 
-	if strings.Join(acct1.RecoveryPhrase(), " ") != testnetData.phrase {
-		t.Fail()
-	}
-
-	if acct2.Seed() != testnetData.seed {
-		t.Fail()
-	}
-
-	if acct1.AccountNumber() != acct2.AccountNumber() {
-		t.Fail()
+	for i, lang := range langCheckSequence {
+		phrase := strings.Split(testnetAccount.phrases[i], " ")
+		acctFromPhrase, err := FromRecoveryPhrase(phrase, lang)
+		if err != nil {
+			t.Fatalf("failed to recover from phrase: %s", err)
+		}
+		check(t, acctFromPhrase, testnetAccount)
 	}
 }
 
 func TestLivenetAccount(t *testing.T) {
-	acct1, err := FromSeed(livenetData.seed)
+	sdk.Init(&sdk.Config{Network: sdk.Livenet})
+
+	acctFromSeed, err := FromSeed(livenetAccount.seed)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to recover from seed: %s", err)
 	}
-	if acct1.Network() != sdk.Livenet {
-		t.Fail()
-	}
+	check(t, acctFromSeed, livenetAccount)
 
-	acct2, err := FromRecoveryPhrase(strings.Split(livenetData.phrase, " "))
+	for i, lang := range langCheckSequence {
+		phrase := strings.Split(livenetAccount.phrases[i], " ")
+		acctFromPhrase, err := FromRecoveryPhrase(phrase, lang)
+		if err != nil {
+			t.Fatalf("failed to recover from phrase: %s", err)
+		}
+		check(t, acctFromPhrase, livenetAccount)
+	}
+}
+
+func TestTestnetDeprecatedtTestnetAccount(t *testing.T) {
+	sdk.Init(&sdk.Config{Network: sdk.Testnet})
+
+	acctFromSeed, err := FromSeed(testnetDeprecatedAccount.seed)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("failed to recover from seed: %s", err)
 	}
-	if acct2.Network() != sdk.Livenet {
-		t.Fatal("wrong network")
-	}
+	check(t, acctFromSeed, testnetDeprecatedAccount)
 
-	if strings.Join(acct1.RecoveryPhrase(), " ") != livenetData.phrase {
-		t.Fatalf("wrong recovery phrase:\nactual = %s\nexpected = %s", strings.Join(acct1.RecoveryPhrase(), " "), livenetData.phrase)
+	for i, lang := range langCheckSequence {
+		if i >= len(testnetDeprecatedAccount.phrases) {
+			break
+		}
+		phrase := strings.Split(testnetDeprecatedAccount.phrases[i], " ")
+		acctFromPhrase, err := FromRecoveryPhrase(phrase, lang)
+		if err != nil {
+			t.Fatalf("failed to recover from phrase: %s", err)
+		}
+		check(t, acctFromPhrase, testnetDeprecatedAccount)
 	}
+}
 
-	if acct2.Seed() != livenetData.seed {
-		t.Fatal("wrong seed")
+func TestTestnetDeprecatedtLivenetAccount(t *testing.T) {
+	sdk.Init(&sdk.Config{Network: sdk.Livenet})
+
+	acctFromSeed, err := FromSeed(livenetDeprecatedAccount.seed)
+	if err != nil {
+		t.Fatalf("failed to recover from seed: %s", err)
 	}
+	check(t, acctFromSeed, livenetDeprecatedAccount)
 
-	if acct1.AccountNumber() != acct2.AccountNumber() {
-		t.Fatal("wrong account number")
+	for i, lang := range langCheckSequence {
+		if i >= len(livenetDeprecatedAccount.phrases) {
+			break
+		}
+		phrase := strings.Split(livenetDeprecatedAccount.phrases[i], " ")
+		acctFromPhrase, err := FromRecoveryPhrase(phrase, lang)
+		if err != nil {
+			t.Fatalf("failed to recover from phrase: %s", err)
+		}
+		check(t, acctFromPhrase, livenetDeprecatedAccount)
 	}
 }
 

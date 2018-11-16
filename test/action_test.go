@@ -22,8 +22,8 @@ type assetRegistrationTestCase struct {
 }
 
 var (
-	sender   *account.Account
-	receiver *account.Account
+	sender   account.Account
+	receiver account.Account
 
 	bitmarkIds = make([]string, 0)
 

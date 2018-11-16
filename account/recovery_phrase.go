@@ -2,6 +2,8 @@ package account
 
 import (
 	"fmt"
+
+	"github.com/bitmark-inc/bitmark-sdk-go/account/bip39"
 )
 
 // 0..10 bit masks
@@ -26,7 +28,7 @@ func bytesToPhrase(input []byte) ([]string, error) {
 			n++
 			index := accumulator >> uint(bits)
 			accumulator &= masks[bits]
-			word := bip39[index]
+			word := bip39.English[index]
 			phrase = append(phrase, word)
 		}
 	}
@@ -49,7 +51,7 @@ func phraseToBytes(words []string) ([]byte, error) {
 	for _, word := range words {
 		n := -1
 	loop:
-		for i, bip := range bip39 {
+		for i, bip := range bip39.English {
 			if word == bip {
 				n = i
 				break loop

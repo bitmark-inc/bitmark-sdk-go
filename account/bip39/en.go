@@ -1,6 +1,6 @@
-package account
+package bip39
 
-var bip39 = []string{
+var English = []string{
 	"abandon",
 	"ability",
 	"able",

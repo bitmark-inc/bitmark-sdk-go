@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/bitmark-sdk-go/account"
 )
 
@@ -12,11 +13,13 @@ var (
 	senderSeed   = "5XEECttxvRBzxzAmuV4oh6T1FcQu4mBg8eWd9wKbf8hweXsfwtJ8sfH"
 	receiverSeed = "5XEECt4yuMK4xqBLr9ky5FBWpkAR6VHNZSz8fUzZDXPnN3D9MeivTSA"
 
-	sender   *account.Account
-	receiver *account.Account
+	sender   account.Account
+	receiver account.Account
 )
 
 func init() {
+	sdk.Init(&sdk.Config{Network: sdk.Testnet})
+
 	sender, _ = account.FromSeed(senderSeed)
 	receiver, _ = account.FromSeed(receiverSeed)
 }

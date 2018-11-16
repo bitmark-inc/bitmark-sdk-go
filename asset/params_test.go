@@ -5,16 +5,19 @@ import (
 	"reflect"
 	"testing"
 
+	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/bitmark-sdk-go/account"
 )
 
 var (
 	seed = "5XEECttxvRBzxzAmuV4oh6T1FcQu4mBg8eWd9wKbf8hweXsfwtJ8sfH"
 
-	registrant *account.Account
+	registrant account.Account
 )
 
 func init() {
+	sdk.Init(&sdk.Config{Network: sdk.Testnet})
+
 	registrant, _ = account.FromSeed(seed)
 }
 

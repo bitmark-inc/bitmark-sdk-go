@@ -64,7 +64,7 @@ func (r *RegistrationParams) SetFingerprint(content []byte) error {
 	return nil
 }
 
-func (r *RegistrationParams) Sign(registrant *account.Account) error {
+func (r *RegistrationParams) Sign(registrant account.Account) error {
 	if registrant == nil {
 		return ErrNullRegistrant
 	}
@@ -74,7 +74,7 @@ func (r *RegistrationParams) Sign(registrant *account.Account) error {
 	if err != nil {
 		return err
 	}
-	r.Signature = hex.EncodeToString(registrant.AuthKey.Sign(message))
+	r.Signature = hex.EncodeToString(registrant.Sign(message))
 
 	return nil
 }
