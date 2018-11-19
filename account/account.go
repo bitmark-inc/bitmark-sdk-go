@@ -7,12 +7,11 @@ import (
 	"fmt"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
-	"github.com/bitmark-inc/bitmark-sdk-go/account/bip39"
 	"github.com/bitmark-inc/bitmark-sdk-go/encoding"
 	"github.com/bitmark-inc/bitmarkd/util"
-	"golang.org/x/crypto/ed25519"
-	"golang.org/x/crypto/nacl/box"
+	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/sha3"
+	"golang.org/x/text/language"
 )
 
 const (
@@ -35,8 +34,28 @@ const (
 	seedV2Length       = 17
 	seedChecksumLength = 4
 
+	base58EncodedSeedV1Length = 40
+	base58EncodedSeedV2Length = 24
+
 	recoveryPhraseV1Length = 24
 	recoveryPhraseV2Length = 12
+)
+
+// only for account v1
+var (
+	seedNonce = [24]byte{
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	}
+	authSeedCount = [16]byte{
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0xe7,
+	}
+	encrSeedCount = [16]byte{
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0xe8,
+	}
 )
 
 var (
@@ -47,12 +66,13 @@ var (
 	ErrInvalidSeedChecksum = errors.New("invalid seed checksum")
 
 	ErrInvalidRecoveryPhrase = errors.New("invalid recovery phrase")
+	ErrLangNotSupported      = errors.New("language not supported")
 )
 
 type Account interface {
 	Network() sdk.Network
 	Seed() string
-	RecoveryPhrase(string) []string
+	RecoveryPhrase(language.Tag) ([]string, error)
 	AccountNumber() string
 	Bytes() []byte
 	Sign(message []byte) (signature []byte)
@@ -86,8 +106,7 @@ func New() (Account, error) {
 func FromSeed(seedBase58Encoded string) (Account, error) {
 	s := encoding.FromBase58(seedBase58Encoded)
 
-	// TODO
-	if len(s) != 40 && len(s) != 24 {
+	if len(s) != base58EncodedSeedV1Length && len(s) != base58EncodedSeedV2Length {
 		return nil, ErrInvalidSeedLength
 	}
 
@@ -129,10 +148,10 @@ func FromSeed(seedBase58Encoded string) (Account, error) {
 	}
 }
 
-func FromRecoveryPhrase(words []string, lang string) (Account, error) {
+func FromRecoveryPhrase(words []string, lang language.Tag) (Account, error) {
 	switch len(words) {
 	case recoveryPhraseV1Length:
-		b, err := phraseToBytes(words)
+		b, err := twentyFourWordsToBytes(words)
 		if err != nil {
 			return nil, err
 		}
@@ -152,39 +171,15 @@ func FromRecoveryPhrase(words []string, lang string) (Account, error) {
 
 		return NewAccountV1(core)
 	case recoveryPhraseV2Length:
-		dict := getBIP39Dict(lang)
-
-		seed := make([]byte, 0, 17)
-
-		remainder := 0
-		bits := 0
-		for _, word := range words {
-			n := -1
-		loop:
-			for i, bip := range dict {
-				if word == bip {
-					n = i
-					break loop
-				}
-			}
-			if n < 0 {
-				return nil, fmt.Errorf("invalid word: %q", word)
-			}
-			remainder = remainder<<11 + n
-			for bits += 11; bits >= 8; bits -= 8 {
-				a := 0xff & (remainder >> uint(bits-8))
-				seed = append(seed, byte(a))
-			}
-			remainder &= masks[bits]
+		dict, err := getBIP39Dict(lang)
+		if err != nil {
+			return nil, err
 		}
 
-		// check that the whole 16 bytes are converted and the final nibble remains to be packed
-		if 4 != bits || 16 != len(seed) {
-			return nil, fmt.Errorf("only converted: %d bytes expected: 16.5", len(seed))
+		seed, err := twelveWordsToByteswords(words, dict)
+		if err != nil {
+			return nil, err
 		}
-
-		// justify final 4 bits to high nibble, low nibble is zero
-		seed = append(seed, byte(remainder<<4))
 
 		return NewAccountV2(seed)
 	default:
@@ -204,12 +199,14 @@ func NewAccountV1(seed *[32]byte) (*AccountV1, error) {
 		return nil, ErrInvalidNetwork
 	}
 
-	authKey, err := NewAuthKey(seed)
+	authEntropy := secretbox.Seal([]byte{}, authSeedCount[:], &seedNonce, seed)
+	authKey, err := NewAuthKey(authEntropy)
 	if err != nil {
 		return nil, err
 	}
 
-	encrKey, err := NewEncrKey(seed)
+	encrEntropy := secretbox.Seal([]byte{}, encrSeedCount[:], &seedNonce, seed)
+	encrKey, err := NewEncrKey(encrEntropy)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +236,7 @@ func (acct *AccountV1) Seed() string {
 	return encoding.ToBase58(b.Bytes())
 }
 
-func (acct *AccountV1) RecoveryPhrase(lang string) []string {
+func (acct *AccountV1) RecoveryPhrase(lang language.Tag) ([]string, error) {
 	buf := new(bytes.Buffer)
 	switch acct.Network() {
 	case sdk.Livenet:
@@ -248,8 +245,7 @@ func (acct *AccountV1) RecoveryPhrase(lang string) []string {
 		buf.Write([]byte{01})
 	}
 	buf.Write(acct.core[:])
-	phrase, _ := bytesToPhrase(buf.Bytes())
-	return phrase
+	return bytesToTwentyFourWords(buf.Bytes())
 }
 
 func (acct *AccountV1) AccountNumber() string {
@@ -284,17 +280,15 @@ func NewAccountV2(seed []byte) (*AccountV2, error) {
 		return nil, err
 	}
 
-	_, authPvtKey, err := ed25519.GenerateKey(bytes.NewBuffer(keys[0]))
+	authKey, err := NewAuthKey(keys[0])
 	if err != nil {
 		return nil, err
 	}
-	authKey := ED25519AuthKey{authPvtKey}
 
-	encrPubKey, encrPvtKey, err := box.GenerateKey(bytes.NewBuffer(keys[1]))
+	encrKey, err := NewEncrKey(keys[1])
 	if err != nil {
 		return nil, err
 	}
-	encrKey := CURVE25519EncrKey{encrPubKey, encrPvtKey}
 
 	return &AccountV2{
 		network: sdk.GetNetwork(),
@@ -357,35 +351,13 @@ func (acct *AccountV2) Seed() string {
 	return b58Seed
 }
 
-func (acct *AccountV2) RecoveryPhrase(lang string) []string {
-	phrase := make([]string, 0, 12)
-	accumulator := 0
-	bits := 0
-	n := 0
-	for i := 0; i < len(acct.seed); i += 1 {
-		accumulator = accumulator<<8 + int(acct.seed[i])
-		bits += 8
-		if bits >= 11 {
-			bits -= 11 // [ 11 bits] [offset bits]
-
-			n += 1
-			index := accumulator >> uint(bits)
-			accumulator &= masks[bits]
-
-			var word string
-			switch lang {
-			case "en":
-				word = bip39.English[index]
-			case "zh-TW":
-				word = bip39.TraditionalChinese[index]
-			default:
-				word = bip39.English[index]
-			}
-
-			phrase = append(phrase, word)
-		}
+func (acct *AccountV2) RecoveryPhrase(lang language.Tag) ([]string, error) {
+	dict, err := getBIP39Dict(lang)
+	if err != nil {
+		return nil, err
 	}
-	return phrase
+
+	return bytesToTwelveWords(acct.seed, dict)
 }
 
 func (acct *AccountV2) AccountNumber() string {
@@ -433,15 +405,4 @@ func ParseAccountNumber(number string) (sdk.Network, []byte, error) {
 	}
 
 	return network, acct, nil
-}
-
-func getBIP39Dict(lang string) []string {
-	switch lang {
-	case "en":
-		return bip39.English
-	case "zh-TW":
-		return bip39.TraditionalChinese
-	default:
-		return bip39.English
-	}
 }

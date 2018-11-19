@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
+	"golang.org/x/text/language"
 )
 
 type valid struct {
@@ -55,7 +56,7 @@ var (
 		sdk.Livenet,
 	}
 
-	langCheckSequence = []string{"en", "zh-TW"}
+	langCheckSequence = []language.Tag{language.AmericanEnglish, language.TraditionalChinese}
 )
 
 func check(t *testing.T, a Account, data valid) {
@@ -64,8 +65,8 @@ func check(t *testing.T, a Account, data valid) {
 	}
 
 	for i, p := range data.phrases {
-		phrase := strings.Join(a.RecoveryPhrase(langCheckSequence[i]), " ")
-		if phrase != data.phrases[i] {
+		phrase, _ := a.RecoveryPhrase(langCheckSequence[i])
+		if strings.Join(phrase, " ") != data.phrases[i] {
 			t.Fatalf("invalid recovery phrase: expected = %s, actual = %s", p, phrase)
 		}
 	}
