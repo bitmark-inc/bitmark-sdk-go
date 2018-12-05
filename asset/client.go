@@ -47,7 +47,7 @@ func Get(assetId string) (*Asset, error) {
 	}
 
 	var result struct {
-		Asset *Asset `json"asset"`
+		Asset *Asset `json:"asset"`
 	}
 	if err := client.Do(req, &result); err != nil {
 		return nil, err
