@@ -20,7 +20,10 @@ func Issue(params *IssuanceParams) ([]string, error) {
 	client := sdk.GetAPIClient()
 
 	body := new(bytes.Buffer)
-	json.NewEncoder(body).Encode(params)
+	if err := json.NewEncoder(body).Encode(params); err != nil {
+		return nil, err
+	}
+
 	req, err := client.NewRequest("POST", "/v3/issue", body)
 	if err != nil {
 		return nil, err
@@ -47,7 +50,10 @@ func Transfer(params *TransferParams) (string, error) {
 	client := sdk.GetAPIClient()
 
 	body := new(bytes.Buffer)
-	json.NewEncoder(body).Encode(params)
+	if err := json.NewEncoder(body).Encode(params); err != nil {
+		return "", err
+	}
+
 	req, err := client.NewRequest("POST", "/v3/transfer", body)
 	if err != nil {
 		return "", err
@@ -65,7 +71,10 @@ func Offer(params *OfferParams) error {
 	client := sdk.GetAPIClient()
 
 	body := new(bytes.Buffer)
-	json.NewEncoder(body).Encode(params)
+	if err := json.NewEncoder(body).Encode(params); err != nil {
+		return err
+	}
+
 	req, err := client.NewRequest("POST", "/v3/transfer", body)
 	if err != nil {
 		return err
@@ -79,7 +88,10 @@ func Respond(params *ResponseParams) error {
 	client := sdk.GetAPIClient()
 
 	body := new(bytes.Buffer)
-	json.NewEncoder(body).Encode(params)
+	if err := json.NewEncoder(body).Encode(params); err != nil {
+		return err
+	}
+
 	req, err := client.NewRequest("PATCH", "/v3/transfer", body)
 	if err != nil {
 		return err
