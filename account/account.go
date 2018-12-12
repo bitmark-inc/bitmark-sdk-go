@@ -14,6 +14,13 @@ import (
 	"golang.org/x/text/language"
 )
 
+type AccountVersion string
+
+const (
+	VERSION_1 AccountVersion = "v1"
+	VERSION_2 AccountVersion = "v2"
+)
+
 const (
 	pubkeyMask     = 0x01
 	testnetMask    = 0x01 << 1
@@ -70,6 +77,7 @@ var (
 )
 
 type Account interface {
+	Version() AccountVersion
 	Network() sdk.Network
 	Seed() string
 	RecoveryPhrase(language.Tag) ([]string, error)
@@ -267,6 +275,10 @@ func (acct *AccountV1) Sign(message []byte) []byte {
 	return acct.AuthKey.Sign(message)
 }
 
+func (acct AccountV1) Version() AccountVersion {
+	return VERSION_1
+}
+
 type AccountV2 struct {
 	network sdk.Network
 	seed    []byte
@@ -377,6 +389,10 @@ func (acct *AccountV2) Bytes() []byte {
 
 func (acct *AccountV2) Sign(message []byte) []byte {
 	return acct.AuthKey.Sign(message)
+}
+
+func (acct AccountV2) Version() AccountVersion {
+	return VERSION_2
 }
 
 func parseNetwork(b byte) (sdk.Network, error) {
