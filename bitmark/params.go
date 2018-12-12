@@ -12,6 +12,12 @@ import (
 	"github.com/bitmark-inc/bitmark-sdk-go/utils"
 )
 
+type OfferResponseAction string
+
+const Accept OfferResponseAction = "accept"
+const Reject OfferResponseAction = "reject"
+const Cancel OfferResponseAction = "cancel"
+
 var nonceIndex uint64
 
 type QuantityOptions struct {
@@ -179,14 +185,14 @@ type CountersignedTransferRequest struct {
 }
 
 type ResponseParams struct {
-	Id               string `json:"id"`
-	Action           string `json:"action"`
-	Countersignature string `json:"countersignature"`
+	Id               string              `json:"id"`
+	Action           OfferResponseAction `json:"action"`
+	Countersignature string              `json:"countersignature"`
 	auth             http.Header
 	record           *CountersignedTransferRequest
 }
 
-func NewTransferResponseParams(bitmark *Bitmark, action string) *ResponseParams {
+func NewTransferResponseParams(bitmark *Bitmark, action OfferResponseAction) *ResponseParams {
 	return &ResponseParams{
 		Id:     bitmark.Offer.Id,
 		Action: action,
@@ -210,7 +216,7 @@ func (r *ResponseParams) Sign(acct account.Account) error {
 	r.auth.Add("timestamp", ts)
 	r.auth.Add("signature", sig)
 
-	if r.Action == "accept" {
+	if r.Action == Accept {
 		message, err := utils.Pack(r.record)
 		if err != nil {
 			return err
