@@ -13,4 +13,5 @@ type Tx struct {
 	Status      string `json:"status"`
 	BlockNumber int    `json:"block_number"`
 	Sequence    int    `json:"offset"`
+	PreviousId  string `json:"previous_id"`
 }

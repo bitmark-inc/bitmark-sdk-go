@@ -157,6 +157,11 @@ func (ub *QueryParamsBuilder) ReferencedBitmark(bitmarkId string) *QueryParamsBu
 	return ub
 }
 
+func (ub *QueryParamsBuilder) ReferencedBlockNumber(blockNumber int64) *QueryParamsBuilder {
+	ub.params.Set("block_number", fmt.Sprintf("%d", blockNumber))
+	return ub
+}
+
 func (ub *QueryParamsBuilder) ReferencedAsset(assetId string) *QueryParamsBuilder {
 	ub.params.Set("asset_id", assetId)
 	return ub
