@@ -25,7 +25,7 @@ const (
 	pubkeyMask     = 0x01
 	testnetMask    = 0x01 << 1
 	algorithmShift = 4
-	checksumLength = 4
+	ChecksumLength = 4
 )
 
 var (
@@ -46,6 +46,8 @@ const (
 
 	recoveryPhraseV1Length = 24
 	recoveryPhraseV2Length = 12
+
+	Base58AccountNumberLength = 37
 )
 
 // only for account v1
@@ -259,7 +261,7 @@ func (acct *AccountV1) RecoveryPhrase(lang language.Tag) ([]string, error) {
 func (acct *AccountV1) AccountNumber() string {
 	buffer := acct.Bytes()
 	checksum := sha3.Sum256(buffer)
-	buffer = append(buffer, checksum[:checksumLength]...)
+	buffer = append(buffer, checksum[:ChecksumLength]...)
 	return encoding.ToBase58(buffer)
 }
 
@@ -375,7 +377,7 @@ func (acct *AccountV2) RecoveryPhrase(lang language.Tag) ([]string, error) {
 func (acct *AccountV2) AccountNumber() string {
 	buffer := acct.Bytes()
 	checksum := sha3.Sum256(buffer)
-	buffer = append(buffer, checksum[:checksumLength]...)
+	buffer = append(buffer, checksum[:ChecksumLength]...)
 	return encoding.ToBase58(buffer)
 }
 
@@ -409,9 +411,9 @@ func parseNetwork(b byte) (sdk.Network, error) {
 func ParseAccountNumber(number string) (sdk.Network, []byte, error) {
 	accountNumberBytes := encoding.FromBase58(number)
 
-	variantAndPubkey := accountNumberBytes[:len(accountNumberBytes)-checksumLength]
+	variantAndPubkey := accountNumberBytes[:len(accountNumberBytes)-ChecksumLength]
 	computedChecksum := sha3.Sum256(variantAndPubkey)
-	if !bytes.Equal(computedChecksum[:checksumLength], accountNumberBytes[len(accountNumberBytes)-checksumLength:]) {
+	if !bytes.Equal(computedChecksum[:ChecksumLength], accountNumberBytes[len(accountNumberBytes)-ChecksumLength:]) {
 		return "", nil, errors.New("invalid account number")
 	}
 

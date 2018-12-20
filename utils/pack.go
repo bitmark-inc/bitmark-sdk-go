@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/bitmark-inc/bitmark-sdk-go/account"
 	"github.com/bitmark-inc/bitmark-sdk-go/encoding"
 )
 
@@ -59,7 +60,10 @@ func Pack(params interface{}) ([]byte, error) {
 		case "account":
 			value := v.Field(i).String()
 			bytes := encoding.FromBase58(value)
-			buffer = appendBytes(buffer, bytes[:len(bytes)-4])
+			if len(bytes) != account.Base58AccountNumberLength {
+				return nil, fmt.Errorf("invalid %s", v.Type().Field(i).Name)
+			}
+			buffer = appendBytes(buffer, bytes[:len(bytes)-account.ChecksumLength])
 		case "payment": // TODO: support escrow
 			buffer = append(buffer, 0)
 		case "uint64":
