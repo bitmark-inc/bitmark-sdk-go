@@ -1,10 +1,10 @@
 package account
 
 import (
-	"encoding/hex"
-	"fmt"
 	"strings"
 	"testing"
+
+	"golang.org/x/crypto/ed25519"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"golang.org/x/text/language"
@@ -162,17 +162,50 @@ func TestTestnetDeprecatedtLivenetAccount(t *testing.T) {
 	}
 }
 
-func TestParseAccountNumber(t *testing.T) {
-	accountNumber := "e1pFRPqPhY2gpgJTpCiwXDnVeouY9EjHY6STtKwdN6Z4bp4sog"
-	network, pubkey, err := ParseAccountNumber(accountNumber)
+func TestParseTestnetAccountNumber(t *testing.T) {
+	sdk.Init(&sdk.Config{Network: sdk.Testnet})
+
+	acctFromSeed, err := FromSeed(testnetAccount.seed)
+	if err != nil {
+		t.Fatalf("failed to recover from seed: %s", err)
+	}
+
+	network, pubkey, err := ParseAccountNumber(acctFromSeed.AccountNumber())
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if network != sdk.Testnet {
-		t.Log(network)
 		t.Fatal("wrong network")
 	}
 
-	fmt.Println(hex.EncodeToString(pubkey))
+	sig := acctFromSeed.Sign([]byte("Hello, world!"))
+
+	if !ed25519.Verify(pubkey, []byte("Hello, world!"), sig) {
+		t.Fatal("wrong public key")
+	}
+}
+
+func TestParseLivenetAccountNumber(t *testing.T) {
+	sdk.Init(&sdk.Config{Network: sdk.Livenet})
+
+	acctFromSeed, err := FromSeed(livenetAccount.seed)
+	if err != nil {
+		t.Fatalf("failed to recover from seed: %s", err)
+	}
+
+	network, pubkey, err := ParseAccountNumber(acctFromSeed.AccountNumber())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if network != sdk.Livenet {
+		t.Fatal("wrong network")
+	}
+
+	sig := acctFromSeed.Sign([]byte("Hello, world!"))
+
+	if !ed25519.Verify(pubkey, []byte("Hello, world!"), sig) {
+		t.Fatal("wrong public key")
+	}
 }

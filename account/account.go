@@ -409,8 +409,8 @@ func parseNetwork(b byte) (sdk.Network, error) {
 func ParseAccountNumber(number string) (sdk.Network, []byte, error) {
 	accountNumberBytes := encoding.FromBase58(number)
 
-	acct := accountNumberBytes[:len(accountNumberBytes)-checksumLength]
-	computedChecksum := sha3.Sum256(acct)
+	variantAndPubkey := accountNumberBytes[:len(accountNumberBytes)-checksumLength]
+	computedChecksum := sha3.Sum256(variantAndPubkey)
 	if !bytes.Equal(computedChecksum[:checksumLength], accountNumberBytes[len(accountNumberBytes)-checksumLength:]) {
 		return "", nil, errors.New("invalid account number")
 	}
@@ -420,5 +420,6 @@ func ParseAccountNumber(number string) (sdk.Network, []byte, error) {
 		network = sdk.Testnet
 	}
 
-	return network, acct, nil
+	pubKey := variantAndPubkey[1:]
+	return network, pubKey, nil
 }
