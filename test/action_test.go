@@ -67,7 +67,7 @@ func TestRegisterAsset(t *testing.T) {
 	}
 }
 
-// This test case wiil issue 4 bitmarks (2 by specifying quantity, 2 by specifying nonces).
+// This test case wiil issue 4 bitmarks:
 // bitmark #1 will be directly transferred to the receiver
 // bitmark #2 will be offered and then canceled
 // bitmark #3 will be offered and then rejected
@@ -86,50 +86,31 @@ func TestOwnershipChange(t *testing.T) {
 	}
 	log.WithField("asset_id", assetId).Info("asset is registered")
 
-	options := bitmark.QuantityOptions{
-		Quantity: 2,
-	}
-
-	// issue bitmarks by specifying quantity
-	ipq := bitmark.NewIssuanceParams(assetId, options)
-	ipq.Sign(sender)
-	bids, err := bitmark.Issue(ipq)
+	// issue bitmarks
+	ip := bitmark.NewIssuanceParams(assetId, 4)
+	ip.Sign(sender)
+	bitmarkIds, err := bitmark.Issue(ip)
 	if err != nil {
-		t.Fatalf("issue for limited editions failed: %s", err)
+		t.Fatalf("issue failed: %s", err)
 	}
-	if len(bids) != 2 {
-		t.Fatalf("incorrect quantity of bitmarks are issued: %d", len(bids))
+	if len(bitmarkIds) != 4 {
+		t.Fatalf("incorrect quantity of bitmarks are issued: %d", len(bitmarkIds))
 	}
-	log.WithField("bitmark_ids", bids).Info("bitmarks are issued")
-	bitmarkIds = append(bitmarkIds, bids...)
+	log.WithField("bitmark_ids", bitmarkIds).Info("bitmarks are issued")
 
-	// issue bitmarks by specifying nonces
-	options.Nonces = []uint64{uint64(1), uint64(2)}
-	ipn := bitmark.NewIssuanceParams(assetId, options) // test if nonces take precedence over quanity
-	ipn.Sign(sender)
-	bids, err = bitmark.Issue(ipn)
-	if err != nil {
-		t.Fatalf("issue on demand failed: %s", err)
-	}
-	if len(bids) != 2 {
-		t.Fatalf("incorrect quantity of bitmarks are issued")
-	}
-	log.WithField("bitmark_ids", bids).Info("bitmarks are issued")
-	bitmarkIds = append(bitmarkIds, bids...)
+	for _, bid := range bitmarkIds {
+		bmk, err := bitmark.Get(bid, false)
+		if err != nil {
+			t.Fatalf("failed to query bitmark: %s", err)
+		}
 
-	log.Info("waiting for the issue txs to be confirmed")
-	time.Sleep(3 * time.Minute)
-	// asset, _ := asset.Get(assetId)
-	// if asset.Status != "confirmed" {
-	// 	continue
-	// }
-	// for _, bid := range bitmarkIds {
-	// 	bmk, _ := bitmark.Get(bid, false)
-	// 	if bmk.Status != "confirmed" {
-	// 		continue
-	// 	}
-	// }
-	// break
+		if bmk.Status != "issuing" {
+			t.Fatalf("bitmark status should be issuing: %s", bid)
+		}
+	}
+
+	log.Info("waiting for the issue tx to be confirmed")
+	time.Sleep(5 * time.Minute)
 
 	// direct transfer the first bitmark
 	if err := directTransfer(bitmarkIds[0]); err != nil {
@@ -155,6 +136,34 @@ func TestOwnershipChange(t *testing.T) {
 	}
 	if err := acceptOffer(bitmarkIds[3]); err != nil {
 		t.Fatalf("failed to accept offer for bitmark %s: %s", bitmarkIds[2], err)
+	}
+}
+
+func TestIssueBitmarksForNonExsistingAsset(t *testing.T) {
+	nonExsistingAssetId := "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+	ip := bitmark.NewIssuanceParams(nonExsistingAssetId, 100)
+	ip.Sign(sender)
+	_, err := bitmark.Issue(ip)
+	if err == nil {
+		t.Fatalf("issue should have been rejected")
+	}
+}
+func TestIssueMoreBitmarks(t *testing.T) {
+	exsistingAssetId := "f738f1a797a4b97e9f43d26764d22242a0507b180b8bbb370df39a6219d1b1b9d52b4bca6335ddf51966c1d62d388c9dba4b633a126265e66ec168a74f980d92"
+	ip := bitmark.NewIssuanceParams(exsistingAssetId, 5)
+	ip.Sign(sender)
+	bitmarkIds, err := bitmark.Issue(ip)
+	if err != nil {
+		t.Fatalf("issue failed: %s", err)
+	}
+	log.WithField("bitmark_ids", bitmarkIds).Info("bitmarks are issued")
+
+	time.Sleep(5 * time.Minute)
+	for _, bid := range bitmarkIds {
+		bmk, err := bitmark.Get(bid, false)
+		if bmk.Status != "settled" || err != nil {
+			t.Fatalf("bitmark %s not settled: %s", bid, err)
+		}
 	}
 }
 

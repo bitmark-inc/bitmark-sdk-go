@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bitmark-inc/bitmark-sdk-go/account"
+	"github.com/bitmark-inc/bitmark-sdk-go/asset"
 	"github.com/bitmark-inc/bitmark-sdk-go/utils"
 )
 
@@ -36,23 +37,25 @@ type IssueRequest struct {
 	Signature string `json:"signature"`
 }
 
-func NewIssuanceParams(assetId string, options QuantityOptions) *IssuanceParams {
+func NewIssuanceParams(assetId string, quantity int) *IssuanceParams {
 	ip := &IssuanceParams{
 		Issuances: make([]*IssueRequest, 0),
 	}
 
-	nonces := make([]uint64, 0)
-	if len(options.Nonces) > 0 {
-		nonces = options.Nonces
-	} else {
-		for i := 0; i < options.Quantity; i++ {
-			atomic.AddUint64(&nonceIndex, 1)
-			nonce := uint64(time.Now().UTC().Unix())*1000 + nonceIndex%1000
-			nonces = append(nonces, nonce)
+	a, _ := asset.Get(assetId)
+	if a == nil || (a != nil && a.Status != "confirmed") {
+		issuance := &IssueRequest{
+			AssetId: assetId,
+			Nonce:   0,
 		}
+		ip.Issuances = append(ip.Issuances, issuance)
+
+		quantity -= 1
 	}
 
-	for _, nonce := range nonces {
+	for i := 0; i < quantity; i++ {
+		atomic.AddUint64(&nonceIndex, 1)
+		nonce := uint64(time.Now().UTC().Unix())*1000 + nonceIndex%1000
 		issuance := &IssueRequest{
 			AssetId: assetId,
 			Nonce:   nonce,
