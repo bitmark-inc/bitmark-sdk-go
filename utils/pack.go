@@ -16,6 +16,9 @@ const (
 	tagIssue                 = uint64(3)
 	tagDirectTransfer        = uint64(4)
 	tagCountersignedTransfer = uint64(5)
+	tagShare                 = uint64(8)
+	tagShareGrant            = uint64(9)
+	tagShareSwap             = uint64(10)
 )
 
 func Pack(params interface{}) ([]byte, error) {
@@ -35,6 +38,12 @@ func Pack(params interface{}) ([]byte, error) {
 		}
 	case "bitmark.CountersignedTransferRequest":
 		buffer = encoding.ToVarint64(tagCountersignedTransfer)
+	case "bitmark.ShareRequest":
+		buffer = encoding.ToVarint64(tagShare)
+	case "bitmark.GrantRequest", "bitmark.CountersignedGrantRequest":
+		buffer = encoding.ToVarint64(tagShareGrant)
+	case "bitmark.SwapRequest", "bitmark.CountersignedSwapRequest":
+		buffer = encoding.ToVarint64(tagShareSwap)
 	}
 
 	for i := 0; i < v.NumField(); i++ {
