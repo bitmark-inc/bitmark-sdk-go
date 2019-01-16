@@ -84,6 +84,23 @@ func Offer(params *OfferParams) error {
 	return err
 }
 
+func Share(params *ShareParams) error {
+	client := sdk.GetAPIClient()
+
+	body := new(bytes.Buffer)
+	if err := json.NewEncoder(body).Encode(params); err != nil {
+		return err
+	}
+
+	req, err := client.NewRequest("POST", "/v3/shares", body)
+	if err != nil {
+		return err
+	}
+
+	err = client.Do(req, nil)
+	return err
+}
+
 func Respond(params *ResponseParams) error {
 	client := sdk.GetAPIClient()
 

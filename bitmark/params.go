@@ -154,11 +154,8 @@ func NewShareParams(quantity uint64) *ShareParams {
 func (s *ShareParams) FromBitmark(bitmarkId string) error {
 	bitmark, err := Get(bitmarkId, false)
 	if err != nil {
-		// FIXME: hard code bitmark ID now
-		s.Share.Link = bitmarkId
-		return nil
+		return err
 	}
-
 	s.Share.Link = bitmark.LatestTxId
 	return nil
 }
