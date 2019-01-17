@@ -185,17 +185,19 @@ type GrantRequest struct {
 
 // ShareGrantingParams is the parameter for granting shares to other accounts via core api
 type ShareGrantingParams struct {
-	Grant *GrantRequest `json:"grant"`
+	Grant     *GrantRequest          `json:"record"`
+	ExtraInfo map[string]interface{} `json:"extra_info"`
 }
 
 // NewShareGrantingParams returns ShareGrantingParams
-func NewShareGrantingParams(shareId string, receiver string, quantity uint64) *ShareGrantingParams {
+func NewShareGrantingParams(shareId string, receiver string, quantity uint64, extraInfo map[string]interface{}) *ShareGrantingParams {
 	return &ShareGrantingParams{
 		Grant: &GrantRequest{
 			ShareId:   shareId,
 			Recipient: receiver,
 			Quantity:  quantity,
 		},
+		ExtraInfo: extraInfo,
 	}
 }
 
@@ -238,6 +240,20 @@ type GrantResponseParams struct {
 
 // Sign will generate the signature for a granting responding request
 func (g *GrantResponseParams) Sign(receiver account.Account) error {
+	ts := strconv.FormatInt(time.Now().UnixNano()/1000000, 10)
+	parts := []string{
+		"updateOffer",
+		g.Id,
+		receiver.AccountNumber(),
+		ts,
+	}
+	msg := strings.Join(parts, "|")
+	sig := hex.EncodeToString(receiver.Sign([]byte(msg)))
+
+	g.auth.Add("requester", receiver.AccountNumber())
+	g.auth.Add("timestamp", ts)
+	g.auth.Add("signature", sig)
+
 	message, err := utils.Pack(g.record)
 	if err != nil {
 		return err

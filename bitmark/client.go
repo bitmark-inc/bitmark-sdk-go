@@ -122,6 +122,47 @@ func Respond(params *ResponseParams) error {
 	return err
 }
 
+func GrantShare(params *ShareGrantingParams) (string, error) {
+	client := sdk.GetAPIClient()
+
+	body := new(bytes.Buffer)
+	if err := json.NewEncoder(body).Encode(params); err != nil {
+		return "", err
+	}
+
+	req, err := client.NewRequest("POST", "/v3/share-offer", body)
+	if err != nil {
+		return "", err
+	}
+
+	var result struct {
+		OfferId string `json:"offer_id"`
+	}
+	err = client.Do(req, &result)
+	return result.OfferId, err
+}
+
+func ReplyShareOffer(params *GrantResponseParams) error {
+	client := sdk.GetAPIClient()
+
+	body := new(bytes.Buffer)
+	if err := json.NewEncoder(body).Encode(params); err != nil {
+		return err
+	}
+
+	req, err := client.NewRequest("PATCH", "/v3/share-offer", body)
+	if err != nil {
+		return err
+	}
+	// TODO: set signaure beautifully
+	for k, v := range params.auth {
+		req.Header.Add(k, v[0])
+	}
+
+	err = client.Do(req, nil)
+	return err
+}
+
 func Get(bitmarkId string, loadAsset bool) (*Bitmark, error) {
 	client := sdk.GetAPIClient()
 
