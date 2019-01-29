@@ -167,6 +167,40 @@ func TestIssueMoreBitmarks(t *testing.T) {
 	}
 }
 
+func TestCreateTransferOfferImmediately(t *testing.T) {
+	// generate new asset content
+	content := time.Now().String()
+
+	// register asset
+	rp, _ := asset.NewRegistrationParams("test", nil)
+	rp.SetFingerprint([]byte(content))
+	rp.Sign(sender)
+	assetId, _ := asset.Register(rp)
+
+	// sender issues a new bitmark
+	ip := bitmark.NewIssuanceParams(assetId, 1)
+	ip.Sign(sender)
+	bitmarkIds, _ := bitmark.Issue(ip)
+
+	// sender can create the offer right after creating a new bitmark without waiting for confirmations
+	offerParams := bitmark.NewOfferParams(receiver.AccountNumber(), nil)
+	offerParams.FromBitmark(bitmarkIds[0])
+	offerParams.Sign(sender)
+	bitmark.Offer(offerParams)
+
+	// receiver can accept the offer after the issue is confirmed
+	// bitmark status: `issuing` -> `transferring`
+	log.Info("waiting for the issue tx to be confirmed")
+	time.Sleep(5 * time.Minute)
+
+	bmk, _ := bitmark.Get(bitmarkIds[0], false) // bitmark status: offering
+	respParams := bitmark.NewTransferResponseParams(bmk, "accept")
+	respParams.Sign(receiver)
+	bitmark.Respond(respParams)
+	bmk, _ = bitmark.Get(bitmarkIds[0], false)
+	t.Logf("bitmark status %s", bmk.Status) // bitmark status: `transferring`
+}
+
 func directTransfer(bid string) error {
 	params := bitmark.NewTransferParams(receiver.AccountNumber())
 	params.FromBitmark(bid)
