@@ -236,6 +236,8 @@ func (i *APIResultIterator) After() bool {
 }
 
 func (i *APIResultIterator) next() bool {
+	i.builder.params.Set("pending", "true")
+
 	if i.current > 0 {
 		i.builder.params.Set("at", strconv.Itoa(i.current))
 	}

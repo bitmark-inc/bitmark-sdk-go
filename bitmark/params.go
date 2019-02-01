@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/bitmark-inc/bitmark-sdk-go/account"
-	"github.com/bitmark-inc/bitmark-sdk-go/asset"
 	"github.com/bitmark-inc/bitmark-sdk-go/utils"
 )
 
@@ -42,8 +41,9 @@ func NewIssuanceParams(assetId string, quantity int) *IssuanceParams {
 		Issuances: make([]*IssueRequest, 0),
 	}
 
-	a, _ := asset.Get(assetId)
-	if a == nil || (a != nil && a.Status != "confirmed") {
+	builder := NewQueryParamsBuilder().ReferencedAsset(assetId)
+	bitmarks, _ := List(builder)
+	if len(bitmarks) == 0 {
 		issuance := &IssueRequest{
 			AssetId: assetId,
 			Nonce:   0,
