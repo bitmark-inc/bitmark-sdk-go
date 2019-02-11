@@ -1,6 +1,7 @@
 package bitmark
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/bitmark-inc/bitmark-sdk-go/asset"
@@ -29,4 +30,21 @@ type TransferOffer struct {
 	ExtraInfo map[string]string             `json:"extra_info"`
 	CreatedAt time.Time                     `json:"created_at"`
 	Open      bool                          `json:"open"`
+}
+
+type Share struct {
+	Id        string `json:"share_id"`
+	Owner     string `json:"owner"`
+	Balance   uint64 `json:"balance"`
+	Available uint64 `json:"available"`
+}
+
+type ShareOffer struct {
+	Id        string          `json:"id"`
+	ShareId   string          `json:"share_id"`
+	From      string          `json:"from"`
+	To        string          `json:"to"`
+	Record    GrantRequest    `json:"record"`
+	ExtraInfo json.RawMessage `json:"extra_info"`
+	CreatedAt time.Time       `json:"created_at"`
 }

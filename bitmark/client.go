@@ -84,23 +84,6 @@ func Offer(params *OfferParams) error {
 	return err
 }
 
-func Share(params *ShareParams) error {
-	client := sdk.GetAPIClient()
-
-	body := new(bytes.Buffer)
-	if err := json.NewEncoder(body).Encode(params); err != nil {
-		return err
-	}
-
-	req, err := client.NewRequest("POST", "/v3/shares", body)
-	if err != nil {
-		return err
-	}
-
-	err = client.Do(req, nil)
-	return err
-}
-
 func Respond(params *ResponseParams) error {
 	client := sdk.GetAPIClient()
 
@@ -120,6 +103,30 @@ func Respond(params *ResponseParams) error {
 
 	err = client.Do(req, nil)
 	return err
+}
+
+func CreateShares(params *ShareParams) (string, string, error) {
+	client := sdk.GetAPIClient()
+
+	body := new(bytes.Buffer)
+	if err := json.NewEncoder(body).Encode(params); err != nil {
+		return "", "", err
+	}
+
+	req, err := client.NewRequest("POST", "/v3/shares", body)
+	if err != nil {
+		return "", "", err
+	}
+
+	var result struct {
+		TxId    string `json:"tx_id"`
+		ShareId string `json:"share_id"`
+	}
+	if err := client.Do(req, &result); err != nil {
+		return "", "", err
+	}
+
+	return result.TxId, result.ShareId, nil
 }
 
 func GrantShare(params *ShareGrantingParams) (string, error) {
@@ -142,25 +149,26 @@ func GrantShare(params *ShareGrantingParams) (string, error) {
 	return result.OfferId, err
 }
 
-func ReplyShareOffer(params *GrantResponseParams) error {
+func ReplyShareOffer(params *GrantResponseParams) (string, error) {
 	client := sdk.GetAPIClient()
 
 	body := new(bytes.Buffer)
 	if err := json.NewEncoder(body).Encode(params); err != nil {
-		return err
+		return "", err
 	}
 
 	req, err := client.NewRequest("PATCH", "/v3/share-offer", body)
 	if err != nil {
-		return err
+		return "", err
 	}
 	// TODO: set signaure beautifully
 	for k, v := range params.auth {
 		req.Header.Add(k, v[0])
 	}
 
-	err = client.Do(req, nil)
-	return err
+	var result txItem
+	err = client.Do(req, &result)
+	return result.TxId, err
 }
 
 func Get(bitmarkId string, loadAsset bool) (*Bitmark, error) {
@@ -203,6 +211,53 @@ func List(builder *QueryParamsBuilder) ([]*Bitmark, error) {
 	}
 
 	return bitmarks, nil
+}
+
+func GetShareBalance(shareId, owner string) (*Share, error) {
+	client := sdk.GetAPIClient()
+
+	req, err := client.NewRequest("GET", fmt.Sprintf("/v3/shares?share_id=%s&owner=%s", shareId, owner), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var result struct {
+		Shares []*Share `json:"shares"`
+	}
+	if err := client.Do(req, &result); err != nil {
+		return nil, err
+	}
+	if len(result.Shares) == 0 {
+		return nil, nil
+	}
+
+	return result.Shares[0], nil
+}
+
+func ListShareOffers(from, to string) ([]*ShareOffer, error) {
+	client := sdk.GetAPIClient()
+
+	vals := url.Values{}
+	if from != "" {
+		vals.Set("from", from)
+	}
+	if to != "" {
+		vals.Set("to", to)
+	}
+
+	req, err := client.NewRequest("GET", fmt.Sprintf("/v3/share-offer?%s", vals.Encode()), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var result struct {
+		Offers []*ShareOffer `json:"offers"`
+	}
+	if err := client.Do(req, &result); err != nil {
+		return nil, err
+	}
+
+	return result.Offers, nil
 }
 
 type Iterator interface {

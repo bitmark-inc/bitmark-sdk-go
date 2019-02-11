@@ -264,8 +264,9 @@ func (g *GrantResponseParams) Sign(receiver account.Account) error {
 }
 
 // NewGrantResponseParams returns GrantResponseParams
-func NewGrantResponseParams(grant *GrantRequest, action OfferResponseAction) *GrantResponseParams {
+func NewGrantResponseParams(id string, grant *GrantRequest, action OfferResponseAction) *GrantResponseParams {
 	return &GrantResponseParams{
+		Id:     id,
 		Action: action,
 		auth:   make(http.Header),
 		record: &CountersignedGrantRequest{

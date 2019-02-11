@@ -12,6 +12,7 @@ import (
 	"github.com/bitmark-inc/bitmark-sdk-go/account"
 	"github.com/bitmark-inc/bitmark-sdk-go/asset"
 	"github.com/bitmark-inc/bitmark-sdk-go/bitmark"
+	"github.com/bitmark-inc/bitmark-sdk-go/tx"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -199,6 +200,129 @@ func TestCreateTransferOfferImmediately(t *testing.T) {
 	bitmark.Respond(respParams)
 	bmk, _ = bitmark.Get(bitmarkIds[0], false)
 	t.Logf("bitmark status %s", bmk.Status) // bitmark status: `transferring`
+}
+
+func TestCreateAndGrantShares(t *testing.T) {
+	assetId, err := registerAsset()
+	if err != nil {
+		t.Fatalf("failed to register a new asset: %s", err)
+	}
+	log.WithField("asset_id", assetId).Info("asset is registered")
+
+	bitmarkIds, err := issueBitmarks(assetId, 1)
+	if err != nil {
+		t.Fatalf("failed to issue a bitmark: %s", err)
+	}
+	log.WithField("bitmark_ids", bitmarkIds).Info("bitmarks are issued")
+
+	log.Info("waiting for the issue tx to be confirmed...")
+	for {
+		if txsAreReady(bitmarkIds) {
+			break
+		}
+		time.Sleep(30 * time.Second)
+	}
+
+	params := bitmark.NewShareParams(10)
+	params.FromBitmark(bitmarkIds[0])
+	params.Sign(sender)
+	txId, shareId, err := bitmark.CreateShares(params)
+	if err != nil {
+		t.Fatalf("failed to create shares: %s", err)
+	}
+	log.WithField("share_id", shareId).WithField("tx_id", txId).Info("shares are created")
+
+	log.Info("waiting for the share tx to be confirmed...")
+	for {
+		if txsAreReady([]string{txId}) {
+			break
+		}
+		time.Sleep(30 * time.Second)
+	}
+
+	share, err := bitmark.GetShareBalance(shareId, sender.AccountNumber())
+	if err != nil {
+		t.Fatalf("failed to query shares: %s", err)
+	}
+	if share.Balance != 10 || share.Available != 10 {
+		t.Fatalf("incorrect balance of sender")
+	}
+
+	grantParams := bitmark.NewShareGrantingParams(shareId, receiver.AccountNumber(), 5, nil)
+	// TODO: how to decide before block
+	grantParams.BeforeBlock(14817)
+	grantParams.Sign(sender)
+	if _, err := bitmark.GrantShare(grantParams); err != nil {
+		t.Fatalf("failed to grant shares: %s", err)
+	}
+
+	offers, err := bitmark.ListShareOffers(sender.AccountNumber(), receiver.AccountNumber())
+	if err != nil {
+		t.Fatalf("failed to query share offers: %s", err)
+	}
+	replyParams := bitmark.NewGrantResponseParams(offers[0].Id, &offers[0].Record, bitmark.Accept)
+	replyParams.Sign(receiver)
+
+	txId, err = bitmark.ReplyShareOffer(replyParams)
+	if err != nil {
+		t.Fatalf("failed to reply share offer: %s", err)
+	}
+	log.WithField("tx_id", txId).Info("shares are granted")
+
+	senderShare, _ := bitmark.GetShareBalance(shareId, sender.AccountNumber())
+	if senderShare.Balance != 10 || senderShare.Available != 5 {
+		t.Fatalf("incorrect balance of sender")
+	}
+
+	receiverShare, _ := bitmark.GetShareBalance(shareId, receiver.AccountNumber())
+	if receiverShare.Balance != 0 || receiverShare.Available != 0 {
+		t.Fatalf("incorrect balance of receiver")
+	}
+
+	log.Info("waiting for the grant tx to be confirmed...")
+	for {
+		if txsAreReady([]string{txId}) {
+			break
+		}
+		time.Sleep(30 * time.Second)
+	}
+
+	senderShare, _ = bitmark.GetShareBalance(shareId, sender.AccountNumber())
+	if senderShare.Balance != 5 || senderShare.Available != 5 {
+		t.Fatalf("incorrect balance of sender")
+	}
+
+	receiverShare, _ = bitmark.GetShareBalance(shareId, receiver.AccountNumber())
+	if receiverShare.Balance != 5 || receiverShare.Available != 5 {
+		t.Fatalf("incorrect balance of receiver")
+	}
+}
+
+func registerAsset() (string, error) {
+	// generate new asset content
+	content := time.Now().String()
+
+	// register asset
+	rp, _ := asset.NewRegistrationParams("RUN TestOwnershipChange", nil)
+	rp.SetFingerprint([]byte(content))
+	rp.Sign(sender)
+	return asset.Register(rp)
+}
+
+func issueBitmarks(assetId string, quantity int) ([]string, error) {
+	ip := bitmark.NewIssuanceParams(assetId, quantity)
+	ip.Sign(sender)
+	return bitmark.Issue(ip)
+}
+
+func txsAreReady(txIds []string) bool {
+	for _, txId := range txIds {
+		tx, _ := tx.Get(txId, false)
+		if tx != nil && tx.Status != "confirmed" {
+			return false
+		}
+	}
+	return true
 }
 
 func directTransfer(bid string) error {
