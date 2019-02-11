@@ -30,10 +30,11 @@ const (
 type APIError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
+	Reason  string `json:"reason"`
 }
 
 func (ae *APIError) Error() string {
-	return fmt.Sprintf("[%d] %s", ae.Code, ae.Message)
+	return fmt.Sprintf("[%d] message: %s reason: %s", ae.Code, ae.Message, ae.Reason)
 }
 
 func Init(cfg *Config) {
