@@ -12,7 +12,6 @@ import (
 )
 
 const (
-	minNameLength     = 1
 	maxNameLength     = 64
 	maxMetadataLength = 2048
 )
@@ -42,7 +41,7 @@ func NewRegistrationParams(name string, metadata map[string]string) (*Registrati
 	}
 	compactMetadata := strings.Join(parts, "\u0000")
 
-	if utf8.RuneCountInString(name) < minNameLength || utf8.RuneCountInString(name) > maxNameLength {
+	if utf8.RuneCountInString(name) > maxNameLength {
 		return nil, ErrInvalidNameLength
 	}
 
