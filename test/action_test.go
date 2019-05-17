@@ -34,7 +34,10 @@ func init() {
 }
 
 func TestRegisterExistingAsset(t *testing.T) {
-	_, err := registerAsset("another name", []byte("Fri May 10 14:01:41 CST 2019"))
+	params, _ := asset.NewRegistrationParams("another name", nil)
+	params.SetFingerprint([]byte("Fri May 10 14:01:41 CST 2019"))
+	params.Sign(sender)
+	_, err := asset.Register(params)
 	assert.Error(t, err)
 }
 
@@ -44,106 +47,101 @@ func TestRegisterExistingAsset(t *testing.T) {
 // bitmark #3 will be offered and then rejected
 // bitmark #4 will be offered and then accepted
 func TestOwnershipChange(t *testing.T) {
-	// register asset
-	assetId, err := registerAsset("", []byte(time.Now().String()))
-	if err != nil {
-		assert.NoError(t, err)
-	}
+	assetId := mustRegisterAsset(t, "", []byte(time.Now().String()))
 	log.WithField("asset_id", assetId).Info("asset is registered")
 
-	// issue bitmarks
-	bitmarkIds, err := issueBitmarks(assetId, 4)
-	if err != nil {
-		assert.NoError(t, err)
-	}
+	bitmarkIds := mustIssueBitmarks(t, assetId, 4)
 	if len(bitmarkIds) != 4 {
-		assert.Equal(t, 4, len(bitmarkIds), "more or less bitmarks are issued")
+		if !assert.Equal(t, 4, len(bitmarkIds), "more or less bitmarks are issued") {
+			t.Fatal()
+		}
 	}
 	for _, bid := range bitmarkIds {
 		log.WithField("bitmark_id", bid).Info("bitmark is issued")
-		vefiryBitmark(t, bid, sender.AccountNumber(), "issuing")
+		verifyBitmark(t, bid, sender.AccountNumber(), "issuing")
 	}
 
 	log.Info("waiting for the issues to be confirmed")
-	time.Sleep(5 * time.Minute)
+	for {
+		if txsAreReady(bitmarkIds) {
+			break
+		}
+		time.Sleep(30 * time.Second)
+	}
 
 	// direct transfer the first bitmark
-	assert.NoError(t, directTransfer(bitmarkIds[0]))
-	vefiryBitmark(t, bitmarkIds[0], receiver.AccountNumber(), "transferring")
+	mustDirectTransfer(t, bitmarkIds[0])
+	verifyBitmark(t, bitmarkIds[0], receiver.AccountNumber(), "transferring")
 
 	// create and reply to transfer offers for the rest bitmarks
 	for i, bid := range bitmarkIds[1:] {
-		assert.NoError(t, createOffer(bid))
-		bmk := vefiryBitmark(t, bid, sender.AccountNumber(), "offering")
+		mustCreateOffer(t, bid)
+		bmk := verifyBitmark(t, bid, sender.AccountNumber(), "offering")
 		switch i {
 		case 0: // cancel offer for bitmarkIds[1]
-			assert.NoError(t, cancelOffer(bmk))
-			vefiryBitmark(t, bitmarkIds[1], sender.AccountNumber(), "settled")
+			mustCancelOffer(t, bmk)
+			verifyBitmark(t, bitmarkIds[1], sender.AccountNumber(), "settled")
 		case 1: // reject offer for bitmarkIds[2]
-			assert.NoError(t, rejectOffer(bmk))
-			vefiryBitmark(t, bitmarkIds[2], sender.AccountNumber(), "settled")
+			mustRejectOffer(t, bmk)
+			verifyBitmark(t, bitmarkIds[2], sender.AccountNumber(), "settled")
 		case 2: // accept offer for bitmarkIds[3]
-			assert.NoError(t, acceptOffer(bmk))
-			vefiryBitmark(t, bitmarkIds[3], receiver.AccountNumber(), "transferring")
+			mustAcceptOffer(t, bmk)
+			verifyBitmark(t, bitmarkIds[3], receiver.AccountNumber(), "transferring")
 		}
 	}
 }
 
 func TestIssueBitmarksForNonExsistingAsset(t *testing.T) {
 	nonExsistingAssetId := "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
-	_, err := issueBitmarks(nonExsistingAssetId, 100)
+	params := bitmark.NewIssuanceParams(nonExsistingAssetId, 1)
+	params.Sign(sender)
+	_, err := bitmark.Issue(params)
 	assert.Error(t, err)
 }
 
 func TestIssueMoreBitmarks(t *testing.T) {
 	exsistingAssetId := "f738f1a797a4b97e9f43d26764d22242a0507b180b8bbb370df39a6219d1b1b9d52b4bca6335ddf51966c1d62d388c9dba4b633a126265e66ec168a74f980d92"
-	bitmarkIds, err := issueBitmarks(exsistingAssetId, 1)
-	assert.NoError(t, err)
-	log.WithField("bitmark_id", bitmarkIds[0]).Info("bitmark is issued")
+	bitmarkIds := mustIssueBitmarks(t, exsistingAssetId, 1)
 
-	time.Sleep(5 * time.Minute)
+	log.Info("waiting for the issue to be confirmed...")
+	for {
+		if txsAreReady(bitmarkIds) {
+			break
+		}
+		time.Sleep(30 * time.Second)
+	}
 
 	for _, bid := range bitmarkIds {
-		vefiryBitmark(t, bid, sender.AccountNumber(), "settled")
+		verifyBitmark(t, bid, sender.AccountNumber(), "settled")
 	}
 }
 
 func TestCreateTransferOfferImmediately(t *testing.T) {
-	// register asset
-	assetId, err := registerAsset("", []byte(time.Now().String()))
-	assert.NoError(t, err)
-
-	// sender issues a new bitmark
-	bitmarkIds, err := issueBitmarks(assetId, 1)
-	assert.NoError(t, err)
+	assetId := mustRegisterAsset(t, "", []byte(time.Now().String()))
+	bitmarkIds := mustIssueBitmarks(t, assetId, 1)
 
 	// sender can create the offer right after creating a new bitmark without waiting for confirmations
-	assert.NoError(t, createOffer(bitmarkIds[0]))
+	mustCreateOffer(t, bitmarkIds[0])
+	verifyBitmark(t, bitmarkIds[0], sender.AccountNumber(), "issuing")
 
-	// receiver can accept the offer after the issue is confirmed
-	// bitmark status: `issuing` -> `transferring`
-	log.Info("waiting for the issue tx to be confirmed")
-	time.Sleep(5 * time.Minute)
+	log.Info("waiting for the issue to be confirmed")
+	for {
+		if txsAreReady(bitmarkIds) {
+			break
+		}
+		time.Sleep(30 * time.Second)
+	}
 
-	bmk := vefiryBitmark(t, bitmarkIds[0], sender.AccountNumber(), "offering")
-	assert.NoError(t, acceptOffer(bmk))
-	vefiryBitmark(t, bitmarkIds[0], receiver.AccountNumber(), "transferring")
+	bmk := verifyBitmark(t, bitmarkIds[0], sender.AccountNumber(), "offering")
+	mustAcceptOffer(t, bmk)
+	verifyBitmark(t, bitmarkIds[0], receiver.AccountNumber(), "transferring")
 }
 
 func TestCreateAndGrantShares(t *testing.T) {
-	assetId, err := registerAsset("", []byte(time.Now().String()))
-	if err != nil {
-		t.Fatalf("failed to register a new asset: %s", err)
-	}
-	log.WithField("asset_id", assetId).Info("asset is registered")
+	assetId := mustRegisterAsset(t, "", []byte(time.Now().String()))
+	bitmarkIds := mustIssueBitmarks(t, assetId, 1)
 
-	bitmarkIds, err := issueBitmarks(assetId, 1)
-	if err != nil {
-		t.Fatalf("failed to issue a bitmark: %s", err)
-	}
-	log.WithField("bitmark_ids", bitmarkIds).Info("bitmarks are issued")
-
-	log.Info("waiting for the issue tx to be confirmed...")
+	log.Info("waiting for the issue to be confirmed...")
 	for {
 		if txsAreReady(bitmarkIds) {
 			break
@@ -226,19 +224,6 @@ func TestCreateAndGrantShares(t *testing.T) {
 	}
 }
 
-func registerAsset(name string, content []byte) (string, error) {
-	params, _ := asset.NewRegistrationParams(name, nil)
-	params.SetFingerprint(content)
-	params.Sign(sender)
-	return asset.Register(params)
-}
-
-func issueBitmarks(assetId string, quantity int) ([]string, error) {
-	params := bitmark.NewIssuanceParams(assetId, quantity)
-	params.Sign(sender)
-	return bitmark.Issue(params)
-}
-
 func txsAreReady(txIds []string) bool {
 	for _, txId := range txIds {
 		tx, _ := tx.Get(txId, false)
@@ -249,44 +234,83 @@ func txsAreReady(txIds []string) bool {
 	return true
 }
 
-func directTransfer(bid string) error {
+func mustRegisterAsset(t *testing.T, name string, content []byte) string {
+	params, _ := asset.NewRegistrationParams(name, nil)
+	params.SetFingerprint(content)
+	params.Sign(sender)
+	assetId, err := asset.Register(params)
+	if !assert.NoError(t, err) {
+		t.Fatal()
+	}
+
+	log.WithField("asset_id", assetId).Info("asset is registered")
+
+	return assetId
+}
+
+func mustIssueBitmarks(t *testing.T, assetId string, quantity int) []string {
+	params := bitmark.NewIssuanceParams(assetId, quantity)
+	params.Sign(sender)
+	bitmarkIds, err := bitmark.Issue(params)
+	if !assert.NoError(t, err) {
+		t.Fatal()
+	}
+
+	for i, bitmarkId := range bitmarkIds {
+		log.WithField("bitmark_id", bitmarkId).Infof("bitmark #%d is issued", i+1)
+	}
+
+	return bitmarkIds
+}
+
+func mustDirectTransfer(t *testing.T, bid string) {
 	params := bitmark.NewTransferParams(receiver.AccountNumber())
 	params.FromBitmark(bid)
 	params.Sign(sender)
 	_, err := bitmark.Transfer(params)
-	return err
+	if !assert.NoError(t, err) {
+		t.Fatal()
+	}
 }
 
-func createOffer(bid string) error {
+func mustCreateOffer(t *testing.T, bid string) {
 	params := bitmark.NewOfferParams(receiver.AccountNumber(), nil)
 	params.FromBitmark(bid)
 	params.Sign(sender)
-	return bitmark.Offer(params)
+	if !assert.NoError(t, bitmark.Offer(params)) {
+		t.Fatal()
+	}
 }
 
-func cancelOffer(bmk *bitmark.Bitmark) error {
+func mustCancelOffer(t *testing.T, bmk *bitmark.Bitmark) {
 	params := bitmark.NewTransferResponseParams(bmk, "cancel")
 	params.Sign(sender)
-	return bitmark.Respond(params)
+	if !assert.NoError(t, bitmark.Respond(params)) {
+		t.Fatal()
+	}
 }
 
-func rejectOffer(bmk *bitmark.Bitmark) error {
+func mustRejectOffer(t *testing.T, bmk *bitmark.Bitmark) {
 	params := bitmark.NewTransferResponseParams(bmk, "reject")
 	params.Sign(receiver)
-	return bitmark.Respond(params)
+	if !assert.NoError(t, bitmark.Respond(params)) {
+		t.Fatal()
+	}
 }
 
-func acceptOffer(bmk *bitmark.Bitmark) error {
+func mustAcceptOffer(t *testing.T, bmk *bitmark.Bitmark) {
 	params := bitmark.NewTransferResponseParams(bmk, "accept")
 	params.Sign(receiver)
-	return bitmark.Respond(params)
+	if !assert.NoError(t, bitmark.Respond(params)) {
+		t.Fatal()
+	}
 }
 
-func vefiryBitmark(t *testing.T, bitmarkId, owner, status string) *bitmark.Bitmark {
+func verifyBitmark(t *testing.T, bitmarkId, owner, status string) *bitmark.Bitmark {
 	time.Sleep(5 * time.Second)
 	bmk, err := bitmark.Get(bitmarkId, false)
-	assert.NoError(t, err)
-	assert.Equal(t, owner, bmk.Owner)
-	assert.Equal(t, status, bmk.Status)
+	if !assert.NoError(t, err) || !assert.Equal(t, owner, bmk.Owner) || !assert.Equal(t, status, bmk.Status) {
+		t.Fatal()
+	}
 	return bmk
 }
