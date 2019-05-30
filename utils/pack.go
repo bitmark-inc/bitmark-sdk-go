@@ -21,6 +21,13 @@ const (
 	tagShareSwap             = uint64(10)
 )
 
+type Direction string
+
+const (
+	Earlier = Direction("earlier")
+	Later   = Direction("later")
+)
+
 func Pack(params interface{}) ([]byte, error) {
 	var buffer []byte
 
