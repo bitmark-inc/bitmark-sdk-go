@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
+	"github.com/bitmark-inc/bitmark-sdk-go/utils"
 )
 
 type registrationRequest struct {
@@ -16,7 +17,7 @@ type registrationRequest struct {
 
 type registeredItem struct {
 	Id        string `json:"id"`
-	Duplocate bool   `json:"duplicate"`
+	Duplicate bool   `json:"duplicate"`
 }
 
 func Register(params *RegistrationParams) (string, error) {
@@ -57,91 +58,24 @@ func Get(assetId string) (*Asset, error) {
 }
 
 func List(builder *QueryParamsBuilder) ([]*Asset, error) {
-	assets := make([]*Asset, 0)
-	it := NewIterator(builder)
-	for it.Before() {
-		for _, a := range it.Values() {
-			assets = append(assets, a)
-		}
-	}
-	if it.Err() != nil {
-		return nil, it.Err()
-	}
+	params, err := builder.Build()
 
-	return assets, nil
-}
-
-type Iterator interface {
-	Before() bool
-	After() bool
-	Values() []*Asset
-	Err() error
-}
-
-type APIResultIterator struct {
-	builder *QueryParamsBuilder
-	current int
-	data    []*Asset
-	err     error
-}
-
-func NewIterator(builder *QueryParamsBuilder) Iterator {
-	return &APIResultIterator{
-		builder: builder,
-	}
-}
-
-func (i *APIResultIterator) Before() bool {
-	i.builder.params.Set("to", "earlier")
-	return i.next()
-}
-
-func (i *APIResultIterator) After() bool {
-	i.builder.params.Set("to", "later")
-	return i.next()
-}
-
-func (i *APIResultIterator) next() bool {
-	if i.current > 0 {
-		i.builder.params.Set("at", strconv.Itoa(i.current))
-	}
-
-	params, err := i.builder.Build()
 	if err != nil {
-		i.err = err
-		return false
+		return nil, err
 	}
 
 	client := sdk.GetAPIClient()
 	req, err := client.NewRequest("GET", "/v3/assets?"+params, nil)
-	if err != nil {
-		i.err = err
-		return false
-	}
 
 	var result struct {
 		Assets []*Asset `json:"assets"`
 	}
+
 	if err := client.Do(req, &result); err != nil {
-		i.err = err
-		return false
+		return nil, err
 	}
 
-	if len(result.Assets) > 0 {
-		i.current = result.Assets[len(result.Assets)-1].Sequence
-		i.data = result.Assets
-		return true
-	}
-
-	return false
-}
-
-func (i *APIResultIterator) Values() []*Asset {
-	return i.data
-}
-
-func (i *APIResultIterator) Err() error {
-	return i.err
+	return result.Assets, nil
 }
 
 type QueryParamsBuilder struct {
@@ -158,6 +92,18 @@ func (qb *QueryParamsBuilder) RegisteredBy(registrant string) *QueryParamsBuilde
 	return qb
 }
 
+func (qb *QueryParamsBuilder) AssetIds(assetIds []string) *QueryParamsBuilder {
+	for _, assetId := range assetIds {
+		qb.params.Add("asset_ids", assetId)
+	}
+	return qb
+}
+
+func (qb *QueryParamsBuilder) Pending(pending bool) *QueryParamsBuilder {
+	qb.params.Set("pending", strconv.FormatBool(pending))
+	return qb
+}
+
 func (qb *QueryParamsBuilder) Limit(size int) *QueryParamsBuilder {
 	if size > 100 {
 		qb.err = errors.New("invalid size: max = 100")
@@ -166,9 +112,27 @@ func (qb *QueryParamsBuilder) Limit(size int) *QueryParamsBuilder {
 	return qb
 }
 
+func (qb *QueryParamsBuilder) At(at int) *QueryParamsBuilder {
+	qb.params.Set("at", strconv.Itoa(at))
+	return qb
+}
+
+func (qb *QueryParamsBuilder) To(direction utils.Direction) *QueryParamsBuilder {
+	if direction != "" && (direction != utils.Later && direction != utils.Earlier) {
+		qb.err = errors.New("it must be 'later' or 'earlier'")
+	}
+
+	qb.params.Set("to", string(direction))
+	return qb
+}
+
 func (qb *QueryParamsBuilder) Build() (string, error) {
 	if qb.err != nil {
 		return "", qb.err
+	}
+
+	if qb.params.Get("pending") == "" {
+		qb.params.Set("pending", "true")
 	}
 
 	return qb.params.Encode(), nil
