@@ -20,8 +20,8 @@ func getRecoveryPhraseFromAccount(acc account.Account) (string, error) {
 	recoveryPhrase, err := acc.RecoveryPhrase(language.AmericanEnglish)
 
 	if err != nil {
-		return strings.Join(recoveryPhrase, " "), nil
-	} else {
 		return "", err
+	} else {
+		return strings.Join(recoveryPhrase, " "), nil
 	}
 }
