@@ -85,25 +85,30 @@ func Offer(params *OfferParams) error {
 	return err
 }
 
-func Respond(params *ResponseParams) error {
+func Respond(params *ResponseParams) (string, error) {
 	client := sdk.GetAPIClient()
 
 	body := new(bytes.Buffer)
 	if err := json.NewEncoder(body).Encode(params); err != nil {
-		return err
+		return "", err
 	}
 
 	req, err := client.NewRequest("PATCH", "/v3/transfer", body)
 	if err != nil {
-		return err
+		return "", err
 	}
 	// TODO: set signaure beautifully
 	for k, v := range params.auth {
 		req.Header.Add(k, v[0])
 	}
 
-	err = client.Do(req, nil)
-	return err
+	var result txItem
+
+	if err := client.Do(req, &result); err != nil {
+		return "", err
+	}
+
+	return result.TxId, nil
 }
 
 func CreateShares(params *ShareParams) (string, string, error) {

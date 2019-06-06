@@ -285,7 +285,8 @@ func mustCreateOffer(t *testing.T, bid string) {
 func mustCancelOffer(t *testing.T, bmk *bitmark.Bitmark) {
 	params := bitmark.NewTransferResponseParams(bmk, "cancel")
 	params.Sign(sender)
-	if !assert.NoError(t, bitmark.Respond(params)) {
+	_, err := bitmark.Respond(params)
+	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
 }
@@ -293,7 +294,8 @@ func mustCancelOffer(t *testing.T, bmk *bitmark.Bitmark) {
 func mustRejectOffer(t *testing.T, bmk *bitmark.Bitmark) {
 	params := bitmark.NewTransferResponseParams(bmk, "reject")
 	params.Sign(receiver)
-	if !assert.NoError(t, bitmark.Respond(params)) {
+	_, err := bitmark.Respond(params)
+	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
 }
@@ -301,7 +303,8 @@ func mustRejectOffer(t *testing.T, bmk *bitmark.Bitmark) {
 func mustAcceptOffer(t *testing.T, bmk *bitmark.Bitmark) {
 	params := bitmark.NewTransferResponseParams(bmk, "accept")
 	params.Sign(receiver)
-	if !assert.NoError(t, bitmark.Respond(params)) {
+	_, err := bitmark.Respond(params)
+	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
 }
