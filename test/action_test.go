@@ -226,7 +226,7 @@ func TestCreateAndGrantShares(t *testing.T) {
 
 func txsAreReady(txIds []string) bool {
 	for _, txId := range txIds {
-		tx, _ := tx.Get(txId, false)
+		tx, _ := tx.Get(txId)
 		if tx != nil && tx.Status != "confirmed" {
 			return false
 		}
@@ -285,7 +285,8 @@ func mustCreateOffer(t *testing.T, bid string) {
 func mustCancelOffer(t *testing.T, bmk *bitmark.Bitmark) {
 	params := bitmark.NewTransferResponseParams(bmk, "cancel")
 	params.Sign(sender)
-	if !assert.NoError(t, bitmark.Respond(params)) {
+	_, err := bitmark.Respond(params)
+	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
 }
@@ -293,7 +294,8 @@ func mustCancelOffer(t *testing.T, bmk *bitmark.Bitmark) {
 func mustRejectOffer(t *testing.T, bmk *bitmark.Bitmark) {
 	params := bitmark.NewTransferResponseParams(bmk, "reject")
 	params.Sign(receiver)
-	if !assert.NoError(t, bitmark.Respond(params)) {
+	_, err := bitmark.Respond(params)
+	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
 }
@@ -301,14 +303,15 @@ func mustRejectOffer(t *testing.T, bmk *bitmark.Bitmark) {
 func mustAcceptOffer(t *testing.T, bmk *bitmark.Bitmark) {
 	params := bitmark.NewTransferResponseParams(bmk, "accept")
 	params.Sign(receiver)
-	if !assert.NoError(t, bitmark.Respond(params)) {
+	_, err := bitmark.Respond(params)
+	if !assert.NoError(t, err) {
 		t.Fatal()
 	}
 }
 
 func verifyBitmark(t *testing.T, bitmarkId, owner, status string) *bitmark.Bitmark {
 	time.Sleep(5 * time.Second)
-	bmk, err := bitmark.Get(bitmarkId, false)
+	bmk, err := bitmark.Get(bitmarkId)
 	if !assert.NoError(t, err) || !assert.Equal(t, owner, bmk.Owner) || !assert.Equal(t, status, bmk.Status) {
 		t.Fatal()
 	}

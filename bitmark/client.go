@@ -10,6 +10,7 @@ import (
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/bitmark-sdk-go/asset"
+	"github.com/bitmark-inc/bitmark-sdk-go/utils"
 )
 
 type txItem struct {
@@ -84,25 +85,30 @@ func Offer(params *OfferParams) error {
 	return err
 }
 
-func Respond(params *ResponseParams) error {
+func Respond(params *ResponseParams) (string, error) {
 	client := sdk.GetAPIClient()
 
 	body := new(bytes.Buffer)
 	if err := json.NewEncoder(body).Encode(params); err != nil {
-		return err
+		return "", err
 	}
 
 	req, err := client.NewRequest("PATCH", "/v3/transfer", body)
 	if err != nil {
-		return err
+		return "", err
 	}
 	// TODO: set signaure beautifully
 	for k, v := range params.auth {
 		req.Header.Add(k, v[0])
 	}
 
-	err = client.Do(req, nil)
-	return err
+	var result txItem
+
+	if err := client.Do(req, &result); err != nil {
+		return "", err
+	}
+
+	return result.TxId, nil
 }
 
 func CreateShares(params *ShareParams) (string, string, error) {
@@ -171,14 +177,11 @@ func ReplyShareOffer(params *GrantResponseParams) (string, error) {
 	return result.TxId, err
 }
 
-func Get(bitmarkId string, loadAsset bool) (*Bitmark, error) {
+func Get(bitmarkId string) (*Bitmark, error) {
 	client := sdk.GetAPIClient()
 
 	vals := url.Values{}
 	vals.Set("pending", "true")
-	if loadAsset {
-		vals.Set("asset", "true")
-	}
 
 	req, err := client.NewRequest("GET", fmt.Sprintf("/v3/bitmarks/%s?%s", bitmarkId, vals.Encode()), nil)
 	if err != nil {
@@ -186,31 +189,58 @@ func Get(bitmarkId string, loadAsset bool) (*Bitmark, error) {
 	}
 
 	var result struct {
-		Bitmark *Bitmark     `json:"bitmark"`
-		Asset   *asset.Asset `json:"asset"`
+		Bitmark *Bitmark `json:"bitmark"`
 	}
 	if err := client.Do(req, &result); err != nil {
 		return nil, err
 	}
 
-	result.Bitmark.Asset = result.Asset
-
 	return result.Bitmark, nil
 }
 
-func List(builder *QueryParamsBuilder) ([]*Bitmark, error) {
-	bitmarks := make([]*Bitmark, 0)
-	it := NewIterator(builder)
-	for it.Before() {
-		for _, b := range it.Values() {
-			bitmarks = append(bitmarks, b)
-		}
-	}
-	if it.Err() != nil {
-		return nil, it.Err()
+func GetWithAsset(bitmarkId string) (*Bitmark, *asset.Asset, error) {
+	client := sdk.GetAPIClient()
+
+	vals := url.Values{}
+	vals.Set("pending", "true")
+	vals.Set("asset", "true")
+
+	req, err := client.NewRequest("GET", fmt.Sprintf("/v3/bitmarks/%s?%s", bitmarkId, vals.Encode()), nil)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return bitmarks, nil
+	var result struct {
+		Bitmark *Bitmark     `json:"bitmark"`
+		Asset   *asset.Asset `json:"asset"`
+	}
+	if err := client.Do(req, &result); err != nil {
+		return nil, nil, err
+	}
+
+	return result.Bitmark, result.Asset, nil
+}
+
+func List(builder *QueryParamsBuilder) ([]*Bitmark, []*asset.Asset, error) {
+	params, err := builder.Build()
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	client := sdk.GetAPIClient()
+	req, err := client.NewRequest("GET", "/v3/bitmarks?"+params, nil)
+
+	var result struct {
+		Bitmarks []*Bitmark     `json:"bitmarks"`
+		Assets   []*asset.Asset `json:"assets"`
+	}
+
+	if err := client.Do(req, &result); err != nil {
+		return nil, nil, err
+	}
+
+	return result.Bitmarks, result.Assets, nil
 }
 
 func GetShareBalance(shareId, owner string) (*Share, error) {
@@ -260,95 +290,6 @@ func ListShareOffers(from, to string) ([]*ShareOffer, error) {
 	return result.Offers, nil
 }
 
-type Iterator interface {
-	Before() bool
-	After() bool
-	Values() []*Bitmark
-	Err() error
-}
-
-type APIResultIterator struct {
-	builder *QueryParamsBuilder
-	current int
-	data    []*Bitmark
-	err     error
-}
-
-func NewIterator(builder *QueryParamsBuilder) Iterator {
-	return &APIResultIterator{
-		builder: builder,
-	}
-}
-
-func (i *APIResultIterator) Before() bool {
-	i.builder.params.Set("to", "earlier")
-	return i.next()
-}
-
-func (i *APIResultIterator) After() bool {
-	i.builder.params.Set("to", "later")
-	return i.next()
-}
-
-func (i *APIResultIterator) next() bool {
-	i.builder.params.Set("pending", "true")
-
-	if i.current > 0 {
-		i.builder.params.Set("at", strconv.Itoa(i.current))
-	}
-
-	params, err := i.builder.Build()
-	if err != nil {
-		i.err = err
-		return false
-	}
-
-	client := sdk.GetAPIClient()
-
-	req, err := client.NewRequest("GET", "/v3/bitmarks?"+params, nil)
-	if err != nil {
-		i.err = err
-		return false
-	}
-
-	var result struct {
-		Bitmarks []*Bitmark     `json:"bitmarks"`
-		Assets   []*asset.Asset `json:"assets"`
-	}
-
-	if err := client.Do(req, &result); err != nil {
-		i.err = err
-		return false
-	}
-
-	if len(result.Bitmarks) > 0 {
-		if len(result.Assets) > 0 { // load assets
-			assets := make(map[string]*asset.Asset)
-			for _, a := range result.Assets {
-				assets[a.Id] = a
-			}
-
-			for _, b := range result.Bitmarks {
-				b.Asset = assets[b.AssetId]
-			}
-		}
-
-		i.current = result.Bitmarks[len(result.Bitmarks)-1].Commit
-		i.data = result.Bitmarks
-		return true
-	}
-
-	return false
-}
-
-func (i *APIResultIterator) Values() []*Bitmark {
-	return i.data
-}
-
-func (i *APIResultIterator) Err() error {
-	return i.err
-}
-
 type QueryParamsBuilder struct {
 	params url.Values
 	err    error
@@ -358,14 +299,24 @@ func NewQueryParamsBuilder() *QueryParamsBuilder {
 	return &QueryParamsBuilder{params: url.Values{}}
 }
 
+func (ub *QueryParamsBuilder) OwnedBy(owner string) *QueryParamsBuilder {
+	ub.params.Set("owner", owner)
+	return ub
+}
+
+func (ub *QueryParamsBuilder) OwnedByWithTransient(owner string) *QueryParamsBuilder {
+	ub.params.Set("owner", owner)
+	ub.params.Set("sent", strconv.FormatBool(true))
+	return ub
+}
+
 func (ub *QueryParamsBuilder) IssuedBy(issuer string) *QueryParamsBuilder {
 	ub.params.Set("issuer", issuer)
 	return ub
 }
 
-func (ub *QueryParamsBuilder) OwnedBy(owner string, transient bool) *QueryParamsBuilder {
-	ub.params.Set("owner", owner)
-	ub.params.Set("sent", strconv.FormatBool(transient))
+func (ub *QueryParamsBuilder) Pending(pending bool) *QueryParamsBuilder {
+	ub.params.Set("pending", strconv.FormatBool(pending))
 	return ub
 }
 
@@ -376,6 +327,13 @@ func (ub *QueryParamsBuilder) OfferFrom(sender string) *QueryParamsBuilder {
 
 func (ub *QueryParamsBuilder) OfferTo(receiver string) *QueryParamsBuilder {
 	ub.params.Set("offer_to", receiver)
+	return ub
+}
+
+func (ub *QueryParamsBuilder) BitmarkIds(bitmarkIds []string) *QueryParamsBuilder {
+	for _, bitmarkId := range bitmarkIds {
+		ub.params.Add("bitmark_ids", bitmarkId)
+	}
 	return ub
 }
 
@@ -397,9 +355,27 @@ func (ub *QueryParamsBuilder) Limit(size int) *QueryParamsBuilder {
 	return ub
 }
 
+func (ub *QueryParamsBuilder) At(at int) *QueryParamsBuilder {
+	ub.params.Set("at", strconv.Itoa(at))
+	return ub
+}
+
+func (ub *QueryParamsBuilder) To(direction utils.Direction) *QueryParamsBuilder {
+	if direction != "" && (direction != utils.Later && direction != utils.Earlier) {
+		ub.err = errors.New("it must be 'later' or 'earlier'")
+	}
+
+	ub.params.Set("to", string(direction))
+	return ub
+}
+
 func (ub *QueryParamsBuilder) Build() (string, error) {
 	if ub.err != nil {
 		return "", ub.err
+	}
+
+	if ub.params.Get("pending") == "" {
+		ub.params.Set("pending", "true")
 	}
 
 	return ub.params.Encode(), nil

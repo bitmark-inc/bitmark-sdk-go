@@ -5,7 +5,7 @@ go 1.12
 require (
 	github.com/bitmark-inc/bitmarkd v0.10.5
 	github.com/sirupsen/logrus v1.4.1
-	github.com/stretchr/testify v1.2.2
+	github.com/stretchr/testify v1.3.0
 	golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869
 	golang.org/x/text v0.3.0
 )

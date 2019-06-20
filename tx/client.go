@@ -8,16 +8,14 @@ import (
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/bitmark-sdk-go/asset"
+	"github.com/bitmark-inc/bitmark-sdk-go/utils"
 )
 
-func Get(txId string, loadAsset bool) (*Tx, error) {
+func Get(txId string) (*Tx, error) {
 	client := sdk.GetAPIClient()
 
 	vals := url.Values{}
 	vals.Set("pending", "true")
-	if loadAsset {
-		vals.Set("asset", "true")
-	}
 
 	req, err := client.NewRequest("GET", fmt.Sprintf("/v3/txs/%s?%s", txId, vals.Encode()), nil)
 	if err != nil {
@@ -25,116 +23,58 @@ func Get(txId string, loadAsset bool) (*Tx, error) {
 	}
 
 	var result struct {
-		Tx    *Tx          `json:"tx"`
-		Asset *asset.Asset `json:"asset"`
+		Tx *Tx `json:"tx"`
 	}
 	if err := client.Do(req, &result); err != nil {
 		return nil, err
 	}
 
-	result.Tx.Asset = result.Asset
-
 	return result.Tx, nil
 }
 
-func List(builder *QueryParamsBuilder) ([]*Tx, error) {
-	txs := make([]*Tx, 0)
-	it := NewIterator(builder)
-	for it.Before() {
-		for _, t := range it.Values() {
-			txs = append(txs, t)
-		}
-	}
-	if it.Err() != nil {
-		return nil, it.Err()
-	}
+func GetWithAsset(txId string) (*Tx, *asset.Asset, error) {
+	client := sdk.GetAPIClient()
 
-	return txs, nil
-}
+	vals := url.Values{}
+	vals.Set("pending", "true")
+	vals.Set("asset", "true")
 
-type APIResultIterator struct {
-	builder *QueryParamsBuilder
-	current int
-	data    []*Tx
-	err     error
-}
-
-type Iterator interface {
-	Before() bool
-	After() bool
-	Values() []*Tx
-	Err() error
-}
-
-func NewIterator(builder *QueryParamsBuilder) Iterator {
-	return &APIResultIterator{
-		builder: builder,
-	}
-}
-
-func (i *APIResultIterator) Before() bool {
-	i.builder.params.Set("to", "earlier")
-	return i.next()
-}
-
-func (i *APIResultIterator) After() bool {
-	i.builder.params.Set("to", "later")
-	return i.next()
-}
-
-func (i *APIResultIterator) next() bool {
-	if i.current > 0 {
-		i.builder.params.Set("at", strconv.Itoa(i.current))
-	}
-
-	params, err := i.builder.Build()
+	req, err := client.NewRequest("GET", fmt.Sprintf("/v3/txs/%s?%s", txId, vals.Encode()), nil)
 	if err != nil {
-		i.err = err
-		return false
+		return nil, nil, err
+	}
+
+	var result struct {
+		Tx    *Tx          `json:"tx"`
+		Asset *asset.Asset `json:"asset"`
+	}
+	if err := client.Do(req, &result); err != nil {
+		return nil, nil, err
+	}
+
+	return result.Tx, result.Asset, nil
+}
+
+func List(builder *QueryParamsBuilder) ([]*Tx, []*asset.Asset, error) {
+	params, err := builder.Build()
+
+	if err != nil {
+		return nil, nil, err
 	}
 
 	client := sdk.GetAPIClient()
 	req, err := client.NewRequest("GET", "/v3/txs?"+params, nil)
-	if err != nil {
-		i.err = err
-		return false
-	}
 
 	var result struct {
 		Txs    []*Tx          `json:"txs"`
 		Assets []*asset.Asset `json:"assets"`
 	}
+
 	if err := client.Do(req, &result); err != nil {
-		i.err = err
-		return false
+		return nil, nil, err
 	}
 
-	if len(result.Txs) > 0 {
-		if len(result.Assets) > 0 { // load assets
-			assets := make(map[string]*asset.Asset)
-			for _, a := range result.Assets {
-				assets[a.Id] = a
-			}
-
-			for _, b := range result.Txs {
-				b.Asset = assets[b.AssetId]
-			}
-		}
-
-		i.current = result.Txs[len(result.Txs)-1].Sequence
-		i.data = result.Txs
-		return true
-	}
-
-	return false
-}
-
-func (i *APIResultIterator) Values() []*Tx {
-	return i.data
-}
-
-func (i *APIResultIterator) Err() error {
-	return i.err
+	return result.Txs, result.Assets, nil
 }
 
 type QueryParamsBuilder struct {
@@ -146,9 +86,14 @@ func NewQueryParamsBuilder() *QueryParamsBuilder {
 	return &QueryParamsBuilder{params: url.Values{}}
 }
 
-func (ub *QueryParamsBuilder) OwnedBy(owner string, transient bool) *QueryParamsBuilder {
+func (ub *QueryParamsBuilder) OwnedBy(owner string) *QueryParamsBuilder {
 	ub.params.Set("owner", owner)
-	ub.params.Set("sent", strconv.FormatBool(transient))
+	return ub
+}
+
+func (ub *QueryParamsBuilder) OwnedByWithTransient(owner string) *QueryParamsBuilder {
+	ub.params.Set("owner", owner)
+	ub.params.Set("sent", "true")
 	return ub
 }
 
@@ -172,6 +117,11 @@ func (ub *QueryParamsBuilder) LoadAsset(load bool) *QueryParamsBuilder {
 	return ub
 }
 
+func (ub *QueryParamsBuilder) Pending(pending bool) *QueryParamsBuilder {
+	ub.params.Set("pending", strconv.FormatBool(pending))
+	return ub
+}
+
 func (ub *QueryParamsBuilder) Limit(size int) *QueryParamsBuilder {
 	if size > 100 {
 		ub.err = errors.New("invalid size: max = 100")
@@ -180,9 +130,27 @@ func (ub *QueryParamsBuilder) Limit(size int) *QueryParamsBuilder {
 	return ub
 }
 
+func (ub *QueryParamsBuilder) At(at int) *QueryParamsBuilder {
+	ub.params.Set("at", strconv.Itoa(at))
+	return ub
+}
+
+func (ub *QueryParamsBuilder) To(direction utils.Direction) *QueryParamsBuilder {
+	if direction != "" && (direction != utils.Later && direction != utils.Earlier) {
+		ub.err = errors.New("it must be 'later' or 'earlier'")
+	}
+
+	ub.params.Set("to", string(direction))
+	return ub
+}
+
 func (ub *QueryParamsBuilder) Build() (string, error) {
 	if ub.err != nil {
 		return "", ub.err
+	}
+
+	if ub.params.Get("pending") == "" {
+		ub.params.Set("pending", "true")
 	}
 
 	return ub.params.Encode(), nil

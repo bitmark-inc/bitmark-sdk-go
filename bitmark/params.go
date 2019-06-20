@@ -42,7 +42,7 @@ func NewIssuanceParams(assetId string, quantity int) *IssuanceParams {
 	}
 
 	builder := NewQueryParamsBuilder().ReferencedAsset(assetId)
-	bitmarks, _ := List(builder)
+	bitmarks, _, _ := List(builder)
 	if len(bitmarks) == 0 {
 		issuance := &IssueRequest{
 			AssetId: assetId,
@@ -101,7 +101,7 @@ type payment struct {
 func NewTransferParams(receiver string) *TransferParams {
 	return &TransferParams{
 		Transfer: &TransferRequest{
-			Owner: receiver,
+			Owner:                   receiver,
 			requireCountersignature: false,
 		},
 	}
@@ -109,7 +109,7 @@ func NewTransferParams(receiver string) *TransferParams {
 
 // FromBitmark sets link asynchronously
 func (t *TransferParams) FromBitmark(bitmarkId string) error {
-	bitmark, err := Get(bitmarkId, false)
+	bitmark, err := Get(bitmarkId)
 	if err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ func NewShareParams(quantity uint64) *ShareParams {
 
 // FromBitmark will set the latest transaction for a target bitmark
 func (s *ShareParams) FromBitmark(bitmarkId string) error {
-	bitmark, err := Get(bitmarkId, false)
+	bitmark, err := Get(bitmarkId)
 	if err != nil {
 		return err
 	}
@@ -397,7 +397,7 @@ func NewOfferParams(receiver string, info map[string]interface{}) *OfferParams {
 			ExtraInfo map[string]interface{} `json:"extra_info"`
 		}{
 			Transfer: &TransferRequest{
-				Owner: receiver,
+				Owner:                   receiver,
 				requireCountersignature: true,
 			},
 			ExtraInfo: info,
@@ -407,7 +407,7 @@ func NewOfferParams(receiver string, info map[string]interface{}) *OfferParams {
 
 // FromBitmark sets link asynchronously
 func (o *OfferParams) FromBitmark(bitmarkId string) error {
-	bitmark, err := Get(bitmarkId, false)
+	bitmark, err := Get(bitmarkId)
 	if err != nil {
 		return err
 	}
