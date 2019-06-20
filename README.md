@@ -12,6 +12,8 @@ The official Bitmark SDK for Golang
 ### Installing
 
 #### Go Module
+
+In `go.mod` file:
 ```sh
 require (
 	github.com/bitmark-inc/bitmark-sdk-go
@@ -26,7 +28,6 @@ govendor fetch github.com/bitmark-inc/bitmark-sdk-go
 #### Manually
 ```sh
 go get github.com/bitmark-inc/bitmark-sdk-go
-cd $GOPATH/src/github.com/bitmark-inc/bitmark-sdk-go
 ```
 
 ## Documentation
@@ -38,7 +39,7 @@ Please refer to our [SDK Document](https://sdk-docs.bitmark.com/).
 This is a [sample project](sample/). It shows how to use Bitmark SDK for Golang.
 
 ## Opening Issues
-If you encounter a bug with the Bitmark SDK for Golang we would like to hear about it. Search the existing issues and try to make sure your problem doesn’t already exist before opening a new issue. It’s helpful if you include the version of the SDK, Golang and OS you’re using. Please include a stack trace and reduced repro case when appropriate, too.
+If you encounter a bug with the Bitmark SDK for Golang we would like to hear from you. Search the existing issues and try to make sure your problem doesn’t exist yet before opening a new issue. It’s helpful if you could provide the version of the SDK, Golang and OS you’re using. Please include a stack trace and reproducible case if possible.
 
 
 ## License
