@@ -37,7 +37,6 @@ var (
 const (
 	seedHeaderLength   = 3
 	seedPrefixLength   = 1
-	seedV1Length       = 32
 	seedV2Length       = 17
 	seedChecksumLength = 4
 
