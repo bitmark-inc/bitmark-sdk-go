@@ -86,7 +86,7 @@ func (s *BackendImplementation) NewRequest(method, path string, body io.Reader) 
 	req.Header.Add("api-token", s.APIToken)
 	// TODO: workaroun for gateway proxy
 	req.Header.Add("Accept-Encoding", "*")
-	req.Header.Add("User-Agent", fmt.Sprintf("%s %s %s", "bitmark-sdk-go", runtime.GOOS, runtime.Version()))
+	req.Header.Add("User-Agent", fmt.Sprintf("%s, %s, %s", "bitmark-sdk-go", runtime.GOOS, runtime.Version()))
 
 	return req, nil
 }
