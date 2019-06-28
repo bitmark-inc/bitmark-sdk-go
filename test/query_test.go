@@ -227,12 +227,12 @@ func TestGetTxWithAsset(t *testing.T) {
 	assert.Equal(t, actualAsset.Id, expected.AssetId)
 }
 
-func TestGetNonExsitingTx(t *testing.T) {
-	_, err := tx.Get("67ef8bfee0ef7b8c33eda34ba21c8b2b")
-	if err.Error() != "[4000] message: tx not found reason: " {
-		t.Fatalf("incorrect error message")
-	}
-}
+// func TestGetNonExsitingTx(t *testing.T) {
+// 	_, err := tx.Get("67ef8bfee0ef7b8c33eda34ba21c8b2b")
+// 	if err.Error() != "[4000] message: tx not found reason: " {
+// 		t.Fatalf("incorrect error message")
+// 	}
+// }
 
 func TestListTxs(t *testing.T) {
 	builder := tx.NewQueryParamsBuilder().

@@ -1,0 +1,22 @@
+notifications:
+  email:
+    on_success: never
+    on_failure: always
+
+language: go
+
+go:
+  - 1.11.x
+env:
+  - GO111MODULE=on
+
+before_script:
+  - go get -v golang.org/x/lint/golint
+  - go get -u github.com/client9/misspell/cmd/misspell
+  - go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+
+script:
+  - golint ./...
+  - misspell ./...
+  - golangci-lint run --no-config --disable=ineffassign,errcheck,govet
+  - go test -v -race -timeout 30m ./test

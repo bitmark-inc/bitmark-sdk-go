@@ -231,6 +231,10 @@ func List(builder *QueryParamsBuilder) ([]*Bitmark, []*asset.Asset, error) {
 	client := sdk.GetAPIClient()
 	req, err := client.NewRequest("GET", "/v3/bitmarks?"+params, nil)
 
+	if err != nil {
+		return nil, nil, err
+	}
+
 	var result struct {
 		Bitmarks []*Bitmark     `json:"bitmarks"`
 		Assets   []*asset.Asset `json:"assets"`

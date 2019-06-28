@@ -67,6 +67,10 @@ func List(builder *QueryParamsBuilder) ([]*Asset, error) {
 	client := sdk.GetAPIClient()
 	req, err := client.NewRequest("GET", "/v3/assets?"+params, nil)
 
+	if err != nil {
+		return nil, err
+	}
+
 	var result struct {
 		Assets []*Asset `json:"assets"`
 	}
