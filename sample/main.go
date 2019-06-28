@@ -96,8 +96,7 @@ func main() {
 	   3.1.1 Query bitmarks
 	   Ex: Query bitmarks which you are owner
 	*/
-	bitmarkQueryBuilder := bitmark.NewQueryParamsBuilder().
-		OwnedBy(acc.AccountNumber(), false)
+	bitmarkQueryBuilder := bitmark.NewQueryParamsBuilder().OwnedBy(acc.AccountNumber())
 
 	bitmarks, err := queryBitmarks(bitmarkQueryBuilder)
 	if err != nil {
@@ -124,8 +123,7 @@ func main() {
 	   3.2.1 Query transactions
 	   Ex: Query transactions which you are owner
 	*/
-	txQueryBuilder := tx.NewQueryParamsBuilder().
-		OwnedBy(acc.AccountNumber(), false)
+	txQueryBuilder := tx.NewQueryParamsBuilder().OwnedBy(acc.AccountNumber())
 
 	txs, err := queryTransactions(txQueryBuilder)
 	if err != nil {
