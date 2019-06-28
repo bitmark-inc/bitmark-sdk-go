@@ -14,52 +14,55 @@ import (
 	"golang.org/x/text/language"
 )
 
-type AccountVersion string
+type Version string
 
 const (
-	VERSION_1 AccountVersion = "v1"
-	VERSION_2 AccountVersion = "v2"
+	V1 Version = "v1"
+	V2 Version = "v2"
+)
+
+const (
+	ChecksumLength            = 4
+	Base58AccountNumberLength = 37
 )
 
 const (
 	pubkeyMask     = 0x01
 	testnetMask    = 0x01 << 1
 	algorithmShift = 4
-	ChecksumLength = 4
+)
+
+const (
+	seedHeaderLength   = 3
+	seedPrefixLength   = 1
+	seedCoreV1Length   = 32
+	seedCoreV2Length   = 17
+	seedChecksumLength = 4
+
+	base58EncodedSeedV1Length     = 40
+	base58EncodedseedCoreV2Length = 24
+
+	recoveryPhraseV1Length = 24
+	recoveryPhraseV2Length = 12
 )
 
 var (
 	seedHeader   = []byte{0x5a, 0xfe}
 	seedHeaderV1 = append(seedHeader[:], []byte{0x01}...)
 	seedHeaderV2 = append(seedHeader[:], []byte{0x02}...)
-)
 
-const (
-	seedHeaderLength   = 3
-	seedPrefixLength   = 1
-	seedV2Length       = 17
-	seedChecksumLength = 4
-
-	base58EncodedSeedV1Length = 40
-	base58EncodedSeedV2Length = 24
-
-	recoveryPhraseV1Length = 24
-	recoveryPhraseV2Length = 12
-
-	Base58AccountNumberLength = 37
-)
-
-// only for account v1
-var (
+	// only for account v1
 	seedNonce = [24]byte{
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	}
+	// only for account v1
 	authSeedCount = [16]byte{
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0xe7,
 	}
+	// only for account v1
 	encrSeedCount = [16]byte{
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0xe8,
@@ -67,18 +70,15 @@ var (
 )
 
 var (
-	ErrInvalidNetwork = errors.New("invalid network")
-
-	ErrInvalidSeedLength   = errors.New("invalid seed length")
-	ErrInvalidSeedHeader   = errors.New("invalid seed header")
-	ErrInvalidSeedChecksum = errors.New("invalid seed checksum")
-
+	ErrWrongNetwork          = errors.New("wrong network")
+	ErrInvalidSeed           = errors.New("invalid seed")
 	ErrInvalidRecoveryPhrase = errors.New("invalid recovery phrase")
+	ErrInvalidAccountNumber  = errors.New("invalid account number")
 	ErrLangNotSupported      = errors.New("language not supported")
 )
 
 type Account interface {
-	Version() AccountVersion
+	Version() Version
 	Network() sdk.Network
 	Seed() string
 	RecoveryPhrase(language.Tag) ([]string, error)
@@ -89,7 +89,7 @@ type Account interface {
 
 func New() (Account, error) {
 	// space for 128 bit random number, extended to 132 bits later
-	seed := make([]byte, 16, seedV2Length)
+	seed := make([]byte, 16, seedCoreV2Length)
 
 	n, err := rand.Read(seed)
 	if err != nil {
@@ -115,8 +115,8 @@ func New() (Account, error) {
 func FromSeed(seedBase58Encoded string) (Account, error) {
 	s := encoding.FromBase58(seedBase58Encoded)
 
-	if len(s) != base58EncodedSeedV1Length && len(s) != base58EncodedSeedV2Length {
-		return nil, ErrInvalidSeedLength
+	if len(s) != base58EncodedSeedV1Length && len(s) != base58EncodedseedCoreV2Length {
+		return nil, ErrInvalidSeed
 	}
 
 	data := s[:len(s)-seedChecksumLength]
@@ -124,7 +124,7 @@ func FromSeed(seedBase58Encoded string) (Account, error) {
 	expectedChecksum := digest[:seedChecksumLength]
 	actualChecksum := s[len(s)-seedChecksumLength:]
 	if !bytes.Equal(expectedChecksum, actualChecksum) {
-		return nil, ErrInvalidSeedChecksum
+		return nil, ErrInvalidSeed
 	}
 
 	header := s[:seedHeaderLength]
@@ -139,7 +139,7 @@ func FromSeed(seedBase58Encoded string) (Account, error) {
 		}
 
 		if network != sdk.GetNetwork() {
-			return nil, fmt.Errorf("tried to recover %s account but the config is set to %s", network, sdk.GetNetwork())
+			return nil, ErrWrongNetwork
 		}
 
 		seed := s[seedHeaderLength+seedPrefixLength : len(s)-seedChecksumLength]
@@ -148,12 +148,29 @@ func FromSeed(seedBase58Encoded string) (Account, error) {
 
 		return NewAccountV1(core)
 	case bytes.Equal(header, seedHeaderV2):
+		// parse network
+		var network sdk.Network
+		core := s[seedHeaderLength : len(s)-seedChecksumLength]
+		mode := core[0]&0x80 | core[1]&0x40 | core[2]&0x20 | core[3]&0x10
+		switch mode {
+		case core[15] & 0xF0:
+			network = sdk.Livenet
+		case core[15]&0xF0 ^ 0xF0:
+			network = sdk.Testnet
+		default:
+			return nil, ErrInvalidSeed
+		}
+
+		if network != sdk.GetNetwork() {
+			return nil, ErrWrongNetwork
+		}
+
 		checksumStart := len(s) - seedChecksumLength
 		seed := s[seedHeaderLength:checksumStart]
 
 		return NewAccountV2(seed)
 	default:
-		return nil, ErrInvalidSeedLength
+		return nil, ErrInvalidSeed
 	}
 }
 
@@ -169,13 +186,18 @@ func FromRecoveryPhrase(words []string, lang language.Tag) (Account, error) {
 		var core = new([32]byte)
 		copy(core[:], b[1:])
 
-		network, err := parseNetwork(networkIndicator)
-		if err != nil {
-			return nil, err
+		var network sdk.Network
+		switch networkIndicator {
+		case 0x00:
+			network = sdk.Livenet
+		case 0x01:
+			network = sdk.Testnet
+		default:
+			return nil, ErrInvalidRecoveryPhrase
 		}
 
 		if network != sdk.GetNetwork() {
-			return nil, fmt.Errorf("tried to recover %s account but the config is set to %s", network, sdk.GetNetwork())
+			return nil, ErrWrongNetwork
 		}
 
 		return NewAccountV1(core)
@@ -185,42 +207,54 @@ func FromRecoveryPhrase(words []string, lang language.Tag) (Account, error) {
 			return nil, err
 		}
 
-		seed, err := twelveWordsToByteswords(words, dict)
+		core, err := twelveWordsToByteswords(words, dict)
 		if err != nil {
 			return nil, err
 		}
 
-		return NewAccountV2(seed)
+		// parse network
+		var network sdk.Network
+		mode := core[0]&0x80 | core[1]&0x40 | core[2]&0x20 | core[3]&0x10
+		switch mode {
+		case core[15] & 0xF0:
+			network = sdk.Livenet
+		case core[15]&0xF0 ^ 0xF0:
+			network = sdk.Testnet
+		default:
+			return nil, ErrInvalidSeed
+		}
+
+		if network != sdk.GetNetwork() {
+			return nil, ErrWrongNetwork
+		}
+
+		return NewAccountV2(core)
 	default:
 		return nil, ErrInvalidRecoveryPhrase
 	}
 }
 
 type AccountV1 struct {
-	network sdk.Network
-	core    *[32]byte
-	AuthKey AuthKey
-	EncrKey EncrKey
+	network  sdk.Network
+	seedCore *[32]byte
+	AuthKey  AuthKey
+	EncrKey  EncrKey
 }
 
-func NewAccountV1(seed *[32]byte) (*AccountV1, error) {
-	if len(seed) != 32 {
-		return nil, ErrInvalidNetwork
-	}
-
-	authEntropy := secretbox.Seal([]byte{}, authSeedCount[:], &seedNonce, seed)
+func NewAccountV1(seedCore *[seedCoreV1Length]byte) (*AccountV1, error) {
+	authEntropy := secretbox.Seal([]byte{}, authSeedCount[:], &seedNonce, seedCore)
 	authKey, err := NewAuthKey(authEntropy)
 	if err != nil {
 		return nil, err
 	}
 
-	encrEntropy := secretbox.Seal([]byte{}, encrSeedCount[:], &seedNonce, seed)
+	encrEntropy := secretbox.Seal([]byte{}, encrSeedCount[:], &seedNonce, seedCore)
 	encrKey, err := NewEncrKey(encrEntropy)
 	if err != nil {
 		return nil, err
 	}
 
-	return &AccountV1{sdk.GetNetwork(), seed, authKey, encrKey}, nil
+	return &AccountV1{sdk.GetNetwork(), seedCore, authKey, encrKey}, nil
 }
 
 func (acct *AccountV1) Network() sdk.Network {
@@ -237,7 +271,7 @@ func (acct *AccountV1) Seed() string {
 	}
 	b.Write(seedPrefix)
 
-	b.Write(acct.core[:])
+	b.Write(acct.seedCore[:])
 
 	checksum := sha3.Sum256(b.Bytes())
 	b.Write(checksum[:seedChecksumLength])
@@ -253,7 +287,7 @@ func (acct *AccountV1) RecoveryPhrase(lang language.Tag) ([]string, error) {
 	case sdk.Testnet:
 		buf.Write([]byte{01})
 	}
-	buf.Write(acct.core[:])
+	buf.Write(acct.seedCore[:])
 	return bytesToTwentyFourWords(buf.Bytes())
 }
 
@@ -276,19 +310,19 @@ func (acct *AccountV1) Sign(message []byte) []byte {
 	return acct.AuthKey.Sign(message)
 }
 
-func (acct AccountV1) Version() AccountVersion {
-	return VERSION_1
+func (acct AccountV1) Version() Version {
+	return V1
 }
 
 type AccountV2 struct {
-	network sdk.Network
-	seed    []byte
-	AuthKey AuthKey
-	EncrKey EncrKey
+	network  sdk.Network
+	seedCore []byte
+	AuthKey  AuthKey
+	EncrKey  EncrKey
 }
 
-func NewAccountV2(seed []byte) (*AccountV2, error) {
-	keys, err := seedToKeys(seed, 2, 32)
+func NewAccountV2(seedCore []byte) (*AccountV2, error) {
+	keys, err := seedCoreToKeys(seedCore, 2, 32)
 	if err != nil {
 		return nil, err
 	}
@@ -304,16 +338,16 @@ func NewAccountV2(seed []byte) (*AccountV2, error) {
 	}
 
 	return &AccountV2{
-		network: sdk.GetNetwork(),
-		seed:    seed,
-		AuthKey: authKey,
-		EncrKey: encrKey,
+		network:  sdk.GetNetwork(),
+		seedCore: seedCore,
+		AuthKey:  authKey,
+		EncrKey:  encrKey,
 	}, nil
 }
 
-func seedToKeys(seed []byte, keyCount int, keySize int) ([][]byte, error) {
-	if len(seed) != seedV2Length || seed[16]&0x0f != 0 {
-		return nil, fmt.Errorf("invalid seed length: expected: %d bytes, actual: %d bytes", seedV2Length, len(seed))
+func seedCoreToKeys(seedCore []byte, keyCount int, keySize int) ([][]byte, error) {
+	if len(seedCore) != seedCoreV2Length || seedCore[16]&0x0f != 0 {
+		return nil, fmt.Errorf("invalid seed length")
 	}
 
 	if keyCount <= 0 {
@@ -323,12 +357,12 @@ func seedToKeys(seed []byte, keyCount int, keySize int) ([][]byte, error) {
 	// add the seed 4 times to hash value
 	hash := sha3.NewShake256()
 	for i := 0; i < 4; i += 1 {
-		n, err := hash.Write(seed)
+		n, err := hash.Write(seedCore)
 		if err != nil {
 			return nil, err
 		}
-		if n != seedV2Length {
-			return nil, fmt.Errorf("seed not successfully written: expected: %d bytes, actual: %d bytes", seedV2Length, n)
+		if n != seedCoreV2Length {
+			return nil, fmt.Errorf("seed not successfully written: expected: %d bytes, actual: %d bytes", seedCoreV2Length, n)
 		}
 	}
 
@@ -353,10 +387,10 @@ func (acct *AccountV2) Network() sdk.Network {
 }
 
 func (acct *AccountV2) Seed() string {
-	b := make([]byte, 0, seedHeaderLength+seedV2Length+seedChecksumLength)
+	b := make([]byte, 0, seedHeaderLength+seedCoreV2Length+seedChecksumLength)
 
 	b = append(b, seedHeaderV2...)
-	b = append(b, acct.seed...)
+	b = append(b, acct.seedCore...)
 	checksum := sha3.Sum256(b)
 	b = append(b, checksum[:seedChecksumLength]...)
 	b58Seed := util.ToBase58(b)
@@ -370,7 +404,7 @@ func (acct *AccountV2) RecoveryPhrase(lang language.Tag) ([]string, error) {
 		return nil, err
 	}
 
-	return bytesToTwelveWords(acct.seed, dict)
+	return bytesToTwelveWords(acct.seedCore, dict)
 }
 
 func (acct *AccountV2) AccountNumber() string {
@@ -392,19 +426,8 @@ func (acct *AccountV2) Sign(message []byte) []byte {
 	return acct.AuthKey.Sign(message)
 }
 
-func (acct AccountV2) Version() AccountVersion {
-	return VERSION_2
-}
-
-func parseNetwork(b byte) (sdk.Network, error) {
-	switch b {
-	case 0x00:
-		return sdk.Livenet, nil
-	case 0x01:
-		return sdk.Testnet, nil
-	default:
-		return "", ErrInvalidNetwork
-	}
+func (acct AccountV2) Version() Version {
+	return V2
 }
 
 func ParseAccountNumber(number string) (sdk.Network, []byte, error) {
@@ -413,7 +436,7 @@ func ParseAccountNumber(number string) (sdk.Network, []byte, error) {
 	variantAndPubkey := accountNumberBytes[:len(accountNumberBytes)-ChecksumLength]
 	computedChecksum := sha3.Sum256(variantAndPubkey)
 	if !bytes.Equal(computedChecksum[:ChecksumLength], accountNumberBytes[len(accountNumberBytes)-ChecksumLength:]) {
-		return "", nil, errors.New("invalid account number")
+		return "", nil, ErrInvalidAccountNumber
 	}
 
 	network := sdk.Livenet

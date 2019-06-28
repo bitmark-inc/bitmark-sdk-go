@@ -15,6 +15,7 @@ type valid struct {
 	phrases       []string
 	accountNumber string
 	network       sdk.Network
+	version       Version
 }
 
 var (
@@ -26,6 +27,7 @@ var (
 		},
 		"eMCcmw1SKoohNUf3LeioTFKaYNYfp2bzFYpjm3EddwxBSWYVCb",
 		sdk.Testnet,
+		V2,
 	}
 
 	livenetAccount = valid{
@@ -36,6 +38,7 @@ var (
 		},
 		"aiKFA9dKkNHPys3nSZrLTPusoocPqXSFp5EexsgQ1hbYUrJVne",
 		sdk.Livenet,
+		V2,
 	}
 
 	testnetDeprecatedAccount = valid{
@@ -45,6 +48,7 @@ var (
 		},
 		"ec6yMcJATX6gjNwvqp8rbc4jNEasoUgbfBBGGyV5NvoJ54NXva",
 		sdk.Testnet,
+		V1,
 	}
 
 	livenetDeprecatedAccount = valid{
@@ -54,6 +58,7 @@ var (
 		},
 		"bDnC8nCaupb1AQtNjBoLVrGmobdALpBewkyYRG7kk2euMG93Bf",
 		sdk.Livenet,
+		V1,
 	}
 
 	langCheckSequence = []language.Tag{language.AmericanEnglish, language.TraditionalChinese}
@@ -77,6 +82,10 @@ func check(t *testing.T, a Account, data valid) {
 
 	if a.Network() != data.network {
 		t.Fatalf("invalid network: expected = %s, actual = %s", data.network, a.Network())
+	}
+
+	if a.Version() != data.version {
+		t.Fatalf("invalid version: expected = %s, actual = %s", data.version, a.Version())
 	}
 }
 
@@ -115,6 +124,62 @@ func TestLivenetAccount(t *testing.T) {
 			t.Fatalf("failed to recover from phrase: %s", err)
 		}
 		check(t, acctFromPhrase, livenetAccount)
+	}
+}
+
+func TestRejectAccountFromWrongNetwork(t *testing.T) {
+	sdk.Init(&sdk.Config{Network: sdk.Livenet})
+
+	if _, err := FromSeed(testnetAccount.seed); err == nil {
+		t.Fatal("seed from testnet not rejected")
+	}
+
+	for i, lang := range langCheckSequence {
+		phrase := strings.Split(testnetAccount.phrases[i], " ")
+		if _, err := FromRecoveryPhrase(phrase, lang); err == nil {
+			t.Fatal("seed from testnet not rejected")
+		}
+	}
+
+	if _, err := FromSeed(testnetDeprecatedAccount.seed); err == nil {
+		t.Fatal("seed from testnet not rejected")
+	}
+
+	for i, lang := range langCheckSequence {
+		if i >= len(testnetDeprecatedAccount.phrases) {
+			break
+		}
+		phrase := strings.Split(testnetDeprecatedAccount.phrases[i], " ")
+		if _, err := FromRecoveryPhrase(phrase, lang); err == nil {
+			t.Fatal("seed from testnet not rejected")
+		}
+	}
+
+	sdk.Init(&sdk.Config{Network: sdk.Testnet})
+
+	if _, err := FromSeed(livenetAccount.seed); err == nil {
+		t.Fatal("seed from livenet not rejected")
+	}
+
+	for i, lang := range langCheckSequence {
+		phrase := strings.Split(livenetAccount.phrases[i], " ")
+		if _, err := FromRecoveryPhrase(phrase, lang); err == nil {
+			t.Fatal("seed from livenet not rejected")
+		}
+	}
+
+	if _, err := FromSeed(livenetDeprecatedAccount.seed); err == nil {
+		t.Fatal("seed from livenet not rejected")
+	}
+
+	for i, lang := range langCheckSequence {
+		if i >= len(testnetDeprecatedAccount.phrases) {
+			break
+		}
+		phrase := strings.Split(livenetDeprecatedAccount.phrases[i], " ")
+		if _, err := FromRecoveryPhrase(phrase, lang); err == nil {
+			t.Fatal("seed from livenet not rejected")
+		}
 	}
 }
 
