@@ -274,7 +274,10 @@ func mustDirectTransfer(t *testing.T, bid string) {
 }
 
 func mustCreateOffer(t *testing.T, bid string) {
-	params := bitmark.NewOfferParams(receiver.AccountNumber(), nil)
+	params, err := bitmark.NewOfferParams(receiver.AccountNumber(), nil)
+	if !assert.NoError(t, err) {
+		t.Fatal()
+	}
 	params.FromBitmark(bid)
 	params.Sign(sender)
 	if !assert.NoError(t, bitmark.Offer(params)) {
