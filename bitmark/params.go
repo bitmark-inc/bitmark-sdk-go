@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/bitmark-sdk-go/account"
 	"github.com/bitmark-inc/bitmark-sdk-go/utils"
 )
@@ -98,13 +99,22 @@ type payment struct {
 	Amount   uint64 `json:"amount,string"`
 }
 
-func NewTransferParams(receiver string) *TransferParams {
+func NewTransferParams(receiver string) (*TransferParams, error) {
+	network, _, err := account.ParseAccountNumber(receiver)
+	if err != nil {
+		return nil, err
+	}
+
+	if network != sdk.GetNetwork() {
+		return nil, account.ErrWrongNetwork
+	}
+
 	return &TransferParams{
 		Transfer: &TransferRequest{
 			Owner:                   receiver,
 			requireCountersignature: false,
 		},
-	}
+	}, nil
 }
 
 // FromBitmark sets link asynchronously
@@ -390,7 +400,16 @@ type OfferParams struct {
 	} `json:"offer"`
 }
 
-func NewOfferParams(receiver string, info map[string]interface{}) *OfferParams {
+func NewOfferParams(receiver string, info map[string]interface{}) (*OfferParams, error) {
+	network, _, err := account.ParseAccountNumber(receiver)
+	if err != nil {
+		return nil, err
+	}
+
+	if network != sdk.GetNetwork() {
+		return nil, account.ErrWrongNetwork
+	}
+
 	return &OfferParams{
 		Offer: struct {
 			Transfer  *TransferRequest       `json:"record"`
@@ -402,7 +421,7 @@ func NewOfferParams(receiver string, info map[string]interface{}) *OfferParams {
 			},
 			ExtraInfo: info,
 		},
-	}
+	}, nil
 }
 
 // FromBitmark sets link asynchronously

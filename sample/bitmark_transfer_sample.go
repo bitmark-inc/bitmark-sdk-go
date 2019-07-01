@@ -7,7 +7,10 @@ import (
 )
 
 func transferOneSignature(sender account.Account, bitmarkId string, receiverAccountNumber string) (string, error) {
-	transferParams := bitmark.NewTransferParams(receiverAccountNumber)
+	transferParams, err := bitmark.NewTransferParams(receiverAccountNumber)
+	if err != nil {
+		return "", err
+	}
 	transferParams.FromBitmark(bitmarkId)
 	transferParams.Sign(sender)
 	txId, err := bitmark.Transfer(transferParams)
@@ -16,17 +19,20 @@ func transferOneSignature(sender account.Account, bitmarkId string, receiverAcco
 }
 
 func sendTransferOffer(sender account.Account, bitmarkId string, receiverAccountNumber string) error {
-	offerParams := bitmark.NewOfferParams(receiverAccountNumber, nil)
+	offerParams, err := bitmark.NewOfferParams(receiverAccountNumber, nil)
+	if err != nil {
+		return err
+	}
 	offerParams.FromBitmark(bitmarkId)
 	offerParams.Sign(sender)
 
-	err := bitmark.Offer(offerParams)
+	err = bitmark.Offer(offerParams)
 
 	return err
 }
 
 func respondToTransferOffer(receiver account.Account, bitmarkId string, confirmation bitmark.OfferResponseAction) error {
-	bmk, _ := bitmark.Get(bitmarkId, false)
+	bmk, _ := bitmark.Get(bitmarkId)
 
 	if bmk != nil && bmk.Status != "offering" {
 		return errors.New("bitmark is not offering")
@@ -35,12 +41,12 @@ func respondToTransferOffer(receiver account.Account, bitmarkId string, confirma
 	rp := bitmark.NewTransferResponseParams(bmk, confirmation)
 	rp.Sign(receiver)
 
-	err := bitmark.Respond(rp)
+	_, err := bitmark.Respond(rp)
 	return err
 }
 
 func cancelTransferOffer(sender account.Account, bitmarkId string) error {
-	bmk, _ := bitmark.Get(bitmarkId, false)
+	bmk, _ := bitmark.Get(bitmarkId)
 
 	if bmk != nil && bmk.Status != "offering" {
 		return errors.New("bitmark is not offering")
@@ -49,6 +55,6 @@ func cancelTransferOffer(sender account.Account, bitmarkId string) error {
 	rp := bitmark.NewTransferResponseParams(bmk, "cancel")
 	rp.Sign(sender)
 
-	err := bitmark.Respond(rp)
+	_, err := bitmark.Respond(rp)
 	return err
 }

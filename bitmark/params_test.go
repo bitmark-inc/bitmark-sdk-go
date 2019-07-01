@@ -59,7 +59,7 @@ func init() {
 // }
 
 func TestTransferParams(t *testing.T) {
-	params := NewTransferParams(receiver.AccountNumber())
+	params, _ := NewTransferParams(receiver.AccountNumber())
 	params.FromLatestTx("67ef8bfee0ef7b8c33eda34ba21c8b2b0fbff601a7021984b2e27985251a0a80")
 	params.Sign(sender)
 
@@ -76,8 +76,32 @@ func TestTransferParams(t *testing.T) {
 	}
 }
 
+func TestRejectReceiverFromAnotherNetwork(t *testing.T) {
+	sdk.Init(&sdk.Config{Network: sdk.Livenet})
+	testnetAccountNumber := "fRTZB3kCf1ESXWPa9fvU96HwCiQ6TXtNcro5gFe8eWiYcMMymP"
+
+	if _, err := NewTransferParams(testnetAccountNumber); err != account.ErrWrongNetwork {
+		t.Fatal("receiver from testnet not rejected")
+	}
+
+	if _, err := NewOfferParams(testnetAccountNumber, nil); err != account.ErrWrongNetwork {
+		t.Fatal("receiver from livenet not rejected")
+	}
+
+	sdk.Init(&sdk.Config{Network: sdk.Testnet})
+	livenetAccountNumber := "bqSUHTVRYnrUPBEU48riv9UwDmdRnHm9Mf9LWYuYEa7JKtqgKw"
+
+	if _, err := NewTransferParams(livenetAccountNumber); err != account.ErrWrongNetwork {
+		t.Fatal("receiver from livenet not rejected")
+	}
+
+	if _, err := NewOfferParams(livenetAccountNumber, nil); err != account.ErrWrongNetwork {
+		t.Fatal("receiver from livenet not rejected")
+	}
+}
+
 func TestOfferParams(t *testing.T) {
-	params := NewOfferParams(receiver.AccountNumber(), nil)
+	params, _ := NewOfferParams(receiver.AccountNumber(), nil)
 	params.FromLatestTx("fa9bb80247dd0f6b3e3f21153f49fbb297b9568e67e298c96dbd75d3a348efeb")
 	params.Sign(sender)
 
