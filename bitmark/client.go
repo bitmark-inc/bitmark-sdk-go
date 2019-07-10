@@ -97,7 +97,7 @@ func Respond(params *ResponseParams) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// TODO: set signaure beautifully
+	// TODO: set signature beautifully
 	for k, v := range params.auth {
 		req.Header.Add(k, v[0])
 	}

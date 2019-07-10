@@ -52,7 +52,7 @@ func (s *OwnershipTestSuite) TestCreateAndCancelCountersignedTransfer() {
 
 	bmk = s.verifyBitmark(bitmarkId, s.sender.AccountNumber(), "offering", 0)
 
-	// cancelled not sender
+	// cancelled by sender
 	params = bitmark.NewTransferResponseParams(bmk, "cancel")
 	params.Sign(s.sender)
 	_, err = bitmark.Respond(params)
@@ -77,7 +77,7 @@ func (s *OwnershipTestSuite) TestCreateAndRejectCountersignedTransfer() {
 
 	bmk = s.verifyBitmark(bitmarkId, s.sender.AccountNumber(), "offering", 0)
 
-	// cancelled not receiver
+	// rejected by receiver
 	params = bitmark.NewTransferResponseParams(bmk, "reject")
 	params.Sign(s.receiver)
 	_, err = bitmark.Respond(params)
@@ -94,7 +94,7 @@ func (s *OwnershipTestSuite) TestCreateAndAcceptCountersignedTransfer() {
 
 	bmk := s.verifyBitmark(bitmarkId, s.sender.AccountNumber(), "offering", 0)
 
-	// rejected not by receiver
+	// accepted not by receiver
 	params := bitmark.NewTransferResponseParams(bmk, "accept")
 	params.Sign(s.sender)
 	_, err := bitmark.Respond(params)
@@ -102,7 +102,7 @@ func (s *OwnershipTestSuite) TestCreateAndAcceptCountersignedTransfer() {
 
 	bmk = s.verifyBitmark(bitmarkId, s.sender.AccountNumber(), "offering", 0)
 
-	// cancelled not receiver
+	// accepted by receiver
 	params = bitmark.NewTransferResponseParams(bmk, "accept")
 	params.Sign(s.receiver)
 	_, err = bitmark.Respond(params)
