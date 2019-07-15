@@ -16,7 +16,7 @@ func registerAsset(registrant account.Account, assetName string, assetFilePath s
 	}
 
 	registrationParams, _ := asset.NewRegistrationParams(assetName, metadata)
-	registrationParams.SetFingerprint([]byte(assetFileContent))
+	registrationParams.SetFingerprintFromData([]byte(assetFileContent))
 	registrationParams.Sign(registrant)
 
 	assetId, err := asset.Register(registrationParams)
