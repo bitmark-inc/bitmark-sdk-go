@@ -1,10 +1,9 @@
 package account
 
 import (
+	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
-
-	"golang.org/x/crypto/ed25519"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"golang.org/x/text/language"
@@ -183,7 +182,7 @@ func TestRejectAccountFromWrongNetwork(t *testing.T) {
 	}
 }
 
-func TestTestnetDeprecatedtTestnetAccount(t *testing.T) {
+func TestTestnetDeprecatedTestnetAccount(t *testing.T) {
 	sdk.Init(&sdk.Config{Network: sdk.Testnet})
 
 	acctFromSeed, err := FromSeed(testnetDeprecatedAccount.seed)
@@ -205,7 +204,7 @@ func TestTestnetDeprecatedtTestnetAccount(t *testing.T) {
 	}
 }
 
-func TestTestnetDeprecatedtLivenetAccount(t *testing.T) {
+func TestTestnetDeprecatedLivenetAccount(t *testing.T) {
 	sdk.Init(&sdk.Config{Network: sdk.Livenet})
 
 	acctFromSeed, err := FromSeed(livenetDeprecatedAccount.seed)
@@ -227,50 +226,32 @@ func TestTestnetDeprecatedtLivenetAccount(t *testing.T) {
 	}
 }
 
-func TestParseTestnetAccountNumber(t *testing.T) {
+func TestValidateAccountNumber(t *testing.T) {
 	sdk.Init(&sdk.Config{Network: sdk.Testnet})
 
-	acctFromSeed, err := FromSeed(testnetAccount.seed)
-	if err != nil {
-		t.Fatalf("failed to recover from seed: %s", err)
-	}
+	err := ValidateAccountNumber(testnetAccount.accountNumber)
+	assert.NoError(t, err)
 
-	network, pubkey, err := ParseAccountNumber(acctFromSeed.AccountNumber())
-	if err != nil {
-		t.Fatal(err)
-	}
+	err = ValidateAccountNumber(testnetDeprecatedAccount.accountNumber)
+	assert.NoError(t, err)
 
-	if network != sdk.Testnet {
-		t.Fatal("wrong network")
-	}
+	err = ValidateAccountNumber(livenetAccount.accountNumber)
+	assert.EqualError(t, err, ErrWrongNetwork.Error())
 
-	sig := acctFromSeed.Sign([]byte("Hello, world!"))
+	err = ValidateAccountNumber(livenetDeprecatedAccount.accountNumber)
+	assert.EqualError(t, err, ErrWrongNetwork.Error())
 
-	if !ed25519.Verify(pubkey, []byte("Hello, world!"), sig) {
-		t.Fatal("wrong public key")
-	}
-}
-
-func TestParseLivenetAccountNumber(t *testing.T) {
 	sdk.Init(&sdk.Config{Network: sdk.Livenet})
 
-	acctFromSeed, err := FromSeed(livenetAccount.seed)
-	if err != nil {
-		t.Fatalf("failed to recover from seed: %s", err)
-	}
+	err = ValidateAccountNumber(testnetAccount.accountNumber)
+	assert.EqualError(t, err, ErrWrongNetwork.Error())
 
-	network, pubkey, err := ParseAccountNumber(acctFromSeed.AccountNumber())
-	if err != nil {
-		t.Fatal(err)
-	}
+	err = ValidateAccountNumber(testnetDeprecatedAccount.accountNumber)
+	assert.EqualError(t, err, ErrWrongNetwork.Error())
 
-	if network != sdk.Livenet {
-		t.Fatal("wrong network")
-	}
+	err = ValidateAccountNumber(livenetAccount.accountNumber)
+	assert.NoError(t, err)
 
-	sig := acctFromSeed.Sign([]byte("Hello, world!"))
-
-	if !ed25519.Verify(pubkey, []byte("Hello, world!"), sig) {
-		t.Fatal("wrong public key")
-	}
+	err = ValidateAccountNumber(livenetDeprecatedAccount.accountNumber)
+	assert.NoError(t, err)
 }

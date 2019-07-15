@@ -73,7 +73,7 @@ var (
 	ErrWrongNetwork          = errors.New("wrong network")
 	ErrInvalidSeed           = errors.New("invalid seed")
 	ErrInvalidRecoveryPhrase = errors.New("invalid recovery phrase")
-	ErrInvalidAccountNumber  = errors.New("invalid account number")
+	ErrInvalidChecksum       = errors.New("invalid checksum")
 	ErrLangNotSupported      = errors.New("language not supported")
 )
 
@@ -430,13 +430,13 @@ func (acct AccountV2) Version() Version {
 	return V2
 }
 
-func ParseAccountNumber(number string) (sdk.Network, []byte, error) {
+func ValidateAccountNumber(number string) error {
 	accountNumberBytes := encoding.FromBase58(number)
 
 	variantAndPubkey := accountNumberBytes[:len(accountNumberBytes)-ChecksumLength]
 	computedChecksum := sha3.Sum256(variantAndPubkey)
 	if !bytes.Equal(computedChecksum[:ChecksumLength], accountNumberBytes[len(accountNumberBytes)-ChecksumLength:]) {
-		return "", nil, ErrInvalidAccountNumber
+		return ErrInvalidChecksum
 	}
 
 	network := sdk.Livenet
@@ -444,6 +444,9 @@ func ParseAccountNumber(number string) (sdk.Network, []byte, error) {
 		network = sdk.Testnet
 	}
 
-	pubKey := variantAndPubkey[1:]
-	return network, pubKey, nil
+	if network != sdk.GetNetwork() {
+		return ErrWrongNetwork
+	}
+
+	return nil
 }
