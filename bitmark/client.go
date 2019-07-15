@@ -86,6 +86,10 @@ func Offer(params *OfferParams) error {
 }
 
 func Respond(params *ResponseParams) (string, error) {
+	if params.Countersignature == "" {
+		return "", errors.New("response not signed by receiver")
+	}
+
 	client := sdk.GetAPIClient()
 
 	body := new(bytes.Buffer)
