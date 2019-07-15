@@ -122,10 +122,6 @@ func (qb *QueryParamsBuilder) At(at int) *QueryParamsBuilder {
 }
 
 func (qb *QueryParamsBuilder) To(direction utils.Direction) *QueryParamsBuilder {
-	if direction != "" && (direction != utils.Later && direction != utils.Earlier) {
-		qb.err = errors.New("it must be 'later' or 'earlier'")
-	}
-
 	qb.params.Set("to", string(direction))
 	return qb
 }
