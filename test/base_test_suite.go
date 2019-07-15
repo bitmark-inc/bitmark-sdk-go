@@ -51,7 +51,7 @@ func (s *BaseTestSuite) TearDownTest() {
 
 func (s *BaseTestSuite) mustRegisterAsset(name string, content []byte) string {
 	params, _ := asset.NewRegistrationParams(name, nil)
-	params.SetFingerprint(content)
+	params.SetFingerprintFromData(content)
 	params.Sign(s.sender)
 	assetId, err := asset.Register(params)
 	if !s.NoError(err) {
