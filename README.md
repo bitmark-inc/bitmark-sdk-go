@@ -1,6 +1,9 @@
 # Bitmark SDK for Golang
 The official Bitmark SDK for Golang
-
+[![GoDoc](https://godoc.org/github.com/bitmark-inc/bitmark-sdk-go/plugins?status.svg)](https://godoc.org/github.com/bitmark-inc/bitmark-sdk-go/)
+[![GitHub issues](https://img.shields.io/github/issues/bitmark-inc/bitmark-sdk-go.svg)](https://github.com/bitmark-inc/bitmark-sdk-go/issues)
+[![GitHub forks](https://img.shields.io/github/forks/bitmark-inc/bitmark-sdk-go.svg)](https://github.com/bitmark-inc/bitmark-sdk-go/network)
+[![Go Report Card](https://goreportcard.com/badge/github.com/bitmark-inc/bitmark-sdk-go)](https://goreportcard.com/report/github.com/bitmark-inc/bitmark-sdk-go)
 [![Build Status](https://travis-ci.org/bitmark-inc/bitmark-sdk-go.svg?branch=master)](https://travis-ci.org/bitmark-inc/bitmark-sdk-go)
 
 ## Setting Up
