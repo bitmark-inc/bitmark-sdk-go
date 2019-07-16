@@ -50,7 +50,7 @@ func NewIssuanceParams(assetId string, quantity int) *IssuanceParams {
 		}
 		ip.Issuances = append(ip.Issuances, issuance)
 
-		quantity -= 1
+		quantity--
 	}
 
 	for i := 0; i < quantity; i++ {
