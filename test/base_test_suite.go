@@ -19,7 +19,7 @@ type BaseTestSuite struct {
 
 	bitmarkIndex int
 	bitmarkCount int
-	bitmarkIds   []string
+	bitmarkIDs   []string
 }
 
 func (s *BaseTestSuite) SetupSuite() {
@@ -41,8 +41,8 @@ func (s *BaseTestSuite) SetupSuite() {
 		s.Fail(err.Error())
 	}
 
-	assetId := s.mustRegisterAsset("", []byte(time.Now().String()))
-	s.bitmarkIds = s.mustIssueBitmarks(assetId, s.bitmarkCount)
+	assetID := s.mustRegisterAsset("", []byte(time.Now().String()))
+	s.bitmarkIDs = s.mustIssueBitmarks(assetID, s.bitmarkCount)
 }
 
 func (s *BaseTestSuite) TearDownTest() {
@@ -53,30 +53,30 @@ func (s *BaseTestSuite) mustRegisterAsset(name string, content []byte) string {
 	params, _ := asset.NewRegistrationParams(name, nil)
 	params.SetFingerprintFromData(content)
 	params.Sign(s.sender)
-	assetId, err := asset.Register(params)
+	assetID, err := asset.Register(params)
 	if !s.NoError(err) {
 		s.T().FailNow()
 	}
 
-	return assetId
+	return assetID
 }
 
-func (s *BaseTestSuite) mustIssueBitmarks(assetId string, quantity int) []string {
-	params := bitmark.NewIssuanceParams(assetId, quantity)
+func (s *BaseTestSuite) mustIssueBitmarks(assetID string, quantity int) []string {
+	params := bitmark.NewIssuanceParams(assetID, quantity)
 	params.Sign(s.sender)
-	bitmarkIds, err := bitmark.Issue(params)
+	bitmarkIDs, err := bitmark.Issue(params)
 	if !s.NoError(err) {
 		s.T().FailNow()
 	}
-	return bitmarkIds
+	return bitmarkIDs
 }
 
-func (s *BaseTestSuite) mustDirectTransfer(bitmarkId string) {
+func (s *BaseTestSuite) mustDirectTransfer(bitmarkID string) {
 	params, err := bitmark.NewTransferParams(s.receiver.AccountNumber())
 	if !s.NoError(err) {
 		s.T().FailNow()
 	}
-	params.FromBitmark(bitmarkId)
+	params.FromBitmark(bitmarkID)
 	params.Sign(s.sender)
 	_, err = bitmark.Transfer(params)
 	if !s.NoError(err) {
@@ -84,23 +84,23 @@ func (s *BaseTestSuite) mustDirectTransfer(bitmarkId string) {
 	}
 }
 
-func (s *BaseTestSuite) mustCreateOffer(bitmarkId string) {
+func (s *BaseTestSuite) mustCreateOffer(bitmarkID string) {
 	params, err := bitmark.NewOfferParams(s.receiver.AccountNumber(), nil)
 	if !s.NoError(err) {
 		s.T().Fatal(err)
 	}
 
-	params.FromBitmark(bitmarkId)
+	params.FromBitmark(bitmarkID)
 	params.Sign(s.sender)
 	if !s.NoError(bitmark.Offer(params)) {
 		s.T().Fatal(err)
 	}
 }
 
-func (s *BaseTestSuite) verifyBitmark(bitmarkId, owner, status string, delay time.Duration) *bitmark.Bitmark {
+func (s *BaseTestSuite) verifyBitmark(bitmarkID, owner, status string, delay time.Duration) *bitmark.Bitmark {
 	time.Sleep(delay)
 
-	bmk, err := bitmark.Get(bitmarkId)
+	bmk, err := bitmark.Get(bitmarkID)
 	if !s.NoError(err) || !s.Equal(owner, bmk.Owner) || !s.Equal(status, bmk.Status) {
 		s.T().Logf("bitmark: %+v", bmk)
 		s.T().FailNow()

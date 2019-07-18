@@ -6,24 +6,24 @@ import (
 	"github.com/bitmark-inc/bitmark-sdk-go/bitmark"
 )
 
-func transferOneSignature(sender account.Account, bitmarkId string, receiverAccountNumber string) (string, error) {
+func transferOneSignature(sender account.Account, bitmarkID string, receiverAccountNumber string) (string, error) {
 	transferParams, err := bitmark.NewTransferParams(receiverAccountNumber)
 	if err != nil {
 		return "", err
 	}
-	transferParams.FromBitmark(bitmarkId)
+	transferParams.FromBitmark(bitmarkID)
 	transferParams.Sign(sender)
-	txId, err := bitmark.Transfer(transferParams)
+	txID, err := bitmark.Transfer(transferParams)
 
-	return txId, err
+	return txID, err
 }
 
-func sendTransferOffer(sender account.Account, bitmarkId string, receiverAccountNumber string) error {
+func sendTransferOffer(sender account.Account, bitmarkID string, receiverAccountNumber string) error {
 	offerParams, err := bitmark.NewOfferParams(receiverAccountNumber, nil)
 	if err != nil {
 		return err
 	}
-	offerParams.FromBitmark(bitmarkId)
+	offerParams.FromBitmark(bitmarkID)
 	offerParams.Sign(sender)
 
 	err = bitmark.Offer(offerParams)
@@ -31,8 +31,8 @@ func sendTransferOffer(sender account.Account, bitmarkId string, receiverAccount
 	return err
 }
 
-func respondToTransferOffer(receiver account.Account, bitmarkId string, confirmation bitmark.OfferResponseAction) error {
-	bmk, _ := bitmark.Get(bitmarkId)
+func respondToTransferOffer(receiver account.Account, bitmarkID string, confirmation bitmark.OfferResponseAction) error {
+	bmk, _ := bitmark.Get(bitmarkID)
 
 	if bmk != nil && bmk.Status != "offering" {
 		return errors.New("bitmark is not offering")
@@ -45,8 +45,8 @@ func respondToTransferOffer(receiver account.Account, bitmarkId string, confirma
 	return err
 }
 
-func cancelTransferOffer(sender account.Account, bitmarkId string) error {
-	bmk, _ := bitmark.Get(bitmarkId)
+func cancelTransferOffer(sender account.Account, bitmarkID string) error {
+	bmk, _ := bitmark.Get(bitmarkID)
 
 	if bmk != nil && bmk.Status != "offering" {
 		return errors.New("bitmark is not offering")

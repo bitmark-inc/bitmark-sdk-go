@@ -25,8 +25,8 @@ func init() {
 }
 
 // func TestIssunaceParams(t *testing.T) {
-// 	assetId := "3c50d70e0fe78819e7755687003483523852ee6ecc59fe40a4e70e89496c4d45313c6d76141bc322ba56ad3f7cd9c906b951791208281ddba3ebb5e7ad83436c"
-// 	params := NewIssuanceParams(assetId, QuantityOptions{Nonces: []uint64{1, 2, 3}})
+// 	assetID := "3c50d70e0fe78819e7755687003483523852ee6ecc59fe40a4e70e89496c4d45313c6d76141bc322ba56ad3f7cd9c906b951791208281ddba3ebb5e7ad83436c"
+// 	params := NewIssuanceParams(assetID, QuantityOptions{Nonces: []uint64{1, 2, 3}})
 // 	params.Sign(sender)
 
 // 	expected := `
@@ -124,7 +124,7 @@ func TestOfferParams(t *testing.T) {
 func TestResponseParams(t *testing.T) {
 	params := NewTransferResponseParams(&Bitmark{
 		Offer: &TransferOffer{
-			Id: "d205ed72-792f-43ca-885a-737949be6501",
+			ID: "d205ed72-792f-43ca-885a-737949be6501",
 			Record: &CountersignedTransferRequest{
 				Link:      "d4abf04785b9a32ba1de395607e760aa3f59315ae9def35eed7b0c93e0e357f3",
 				Owner:     "eZpG6Wi9SQvpDatEP7QGrx6nvzwd6s6R8DgMKgDbDY1R5bjzb9",

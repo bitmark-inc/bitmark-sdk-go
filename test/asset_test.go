@@ -20,8 +20,8 @@ func (s *AssetTestSuite) TestRegisterExistingAsset() {
 }
 
 func (s *AssetTestSuite) TestIssueBitmarksForNotExistingAsset() {
-	notExistingAssetId := "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
-	params := bitmark.NewIssuanceParams(notExistingAssetId, 1)
+	notExistingAssetID := "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+	params := bitmark.NewIssuanceParams(notExistingAssetID, 1)
 	params.Sign(s.sender)
 	_, err := bitmark.Issue(params)
 	s.Error(err)

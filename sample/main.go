@@ -60,31 +60,31 @@ func main() {
 		"k2": "v2",
 	} // Metadata length must be less than or equal 2048 characters
 
-	assetId, err := registerAsset(acc, assetName, assetFilePath, metadata)
+	assetID, err := registerAsset(acc, assetName, assetFilePath, metadata)
 
 	if err != nil {
 		fmt.Println("Can not register asset!")
 		panic(err)
 	}
 
-	fmt.Println("Asset Id:", assetId)
+	fmt.Println("Asset ID:", assetID)
 
 	/*
 	   2.2 Issue bitmarks for asset
 	   You need provide asset ID to issue bitmarks for asset
 	*/
 
-	assetId = "YOUR_ASSET_ID"
+	assetID = "YOUR_ASSET_ID"
 	quantity := 100 // Number of bitmarks you want to issue, quantity must be less than or equal 100.
 
-	bitmarkIds, err := issueBitmarks(acc, assetId, quantity)
+	bitmarkIDs, err := issueBitmarks(acc, assetID, quantity)
 
 	if err != nil {
 		fmt.Println("Can not issue bitmarks!")
 		panic(err)
 	}
 
-	fmt.Println("Bitmark Ids:", bitmarkIds)
+	fmt.Println("Bitmark IDs:", bitmarkIDs)
 
 	//////////////////////////////////////
 	// 3. QUERY
@@ -107,8 +107,8 @@ func main() {
 	fmt.Println("Bitmarks Length:", len(bitmarks))
 
 	// 3.1.2 Query bitmark
-	bitmarkId := "BITMARK_ID"
-	bitmark, err := queryBitmarkById(bitmarkId)
+	bitmarkID := "BITMARK_ID"
+	bitmark, err := queryBitmarkByID(bitmarkID)
 
 	if err != nil {
 		fmt.Println("Can not query bitmark!")
@@ -134,8 +134,8 @@ func main() {
 	fmt.Println("Transactions Length:", len(txs))
 
 	// 3.2.2 Query Transaction
-	txId := "TRANSACTION_ID"
-	tx, err := queryTransactionById(txId)
+	txID := "TRANSACTION_ID"
+	tx, err := queryTransactionByID(txID)
 	if err != nil {
 		fmt.Println("Can not query transaction!")
 		panic(err)
@@ -161,8 +161,8 @@ func main() {
 	fmt.Println("Bitmarks Length:", len(assets))
 
 	// 3.3.2 Query asset
-	assetId = "ASSET_ID"
-	asset, err := queryAssetById(assetId)
+	assetID = "ASSET_ID"
+	asset, err := queryAssetByID(assetID)
 
 	if err != nil {
 		fmt.Println("Can not query asset!")
@@ -180,16 +180,16 @@ func main() {
 	   You can transfer your bitmark to another account without their acceptance.
 	   Note: Your bitmark must be confirmed on Bitmark block-chain(status=settled) before you can transfer it. You can query bitmark by bitmark ID to check it's status.
 	*/
-	transferBitmarkId := "YOUR_BITMARK_ID"
+	transferBitmarkID := "YOUR_BITMARK_ID"
 	receiverAccountNumber := "ACCOUNT_NUMBER_YOU_WANT_TO_TRANSFER_BITMARK_TO"
-	txIdResponse, err := transferOneSignature(acc, transferBitmarkId, receiverAccountNumber)
+	txIDResponse, err := transferOneSignature(acc, transferBitmarkID, receiverAccountNumber)
 
 	if err != nil {
 		fmt.Println("Can not transfer bitmark!")
 		panic(err)
 	}
 
-	fmt.Println("txIdResponse:", txIdResponse)
+	fmt.Println("txIDResponse:", txIDResponse)
 
 	/*
 	   4.2 Transfer bitmark using 2 signatures
@@ -203,9 +203,9 @@ func main() {
 	*/
 
 	// YOUR CODE: Send transfer offer to receiver
-	offerBitmarkId := "YOUR_BITMARK_ID"
+	offerBitmarkID := "YOUR_BITMARK_ID"
 	receiverAccountNumber = "ACCOUNT_NUMBER_YOU_WANT_TO_TRANSFER_BITMARK_TO"
-	err = sendTransferOffer(acc, offerBitmarkId, receiverAccountNumber)
+	err = sendTransferOffer(acc, offerBitmarkID, receiverAccountNumber)
 
 	if err != nil {
 		fmt.Println("Can not send transfer offer")
@@ -214,9 +214,9 @@ func main() {
 
 	// 4.2.1 Receiver respond(accept/reject) your transfer offer
 	// RECEIVER's CODE
-	bitmarkId = "WILL_RECEIVE_BITMARK_ID"
+	bitmarkID = "WILL_RECEIVE_BITMARK_ID"
 	receiverAccount, _ := getAccountFromRecoveryPhrase("RECEIVER_RECOVERY_PHRASE")
-	err = respondToTransferOffer(receiverAccount, bitmarkId, "accept")
+	err = respondToTransferOffer(receiverAccount, bitmarkID, "accept")
 
 	if err != nil {
 		fmt.Println("Can not response to transfer offer")
@@ -225,8 +225,8 @@ func main() {
 
 	// 4.2.2 You cancel your own transfer offer
 	// YOUR CODE
-	bitmarkId = "YOUR_BITMARK_ID_SENT"
-	err = cancelTransferOffer(acc, bitmarkId)
+	bitmarkID = "YOUR_BITMARK_ID_SENT"
+	err = cancelTransferOffer(acc, bitmarkID)
 	if err != nil {
 		fmt.Println("Can not send transfer offer")
 		panic(err)

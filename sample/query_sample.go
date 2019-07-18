@@ -11,8 +11,8 @@ func queryBitmarks(queryParamsBuilder *bitmark.QueryParamsBuilder) ([]*bitmark.B
 	return bitmarks, err
 }
 
-func queryBitmarkById(bitmarkId string) (*bitmark.Bitmark, error) {
-	bitmark, err := bitmark.Get(bitmarkId)
+func queryBitmarkByID(bitmarkID string) (*bitmark.Bitmark, error) {
+	bitmark, err := bitmark.Get(bitmarkID)
 	return bitmark, err
 }
 
@@ -21,8 +21,8 @@ func queryAssets(queryParamsBuilder *asset.QueryParamsBuilder) ([]*asset.Asset, 
 	return assets, err
 }
 
-func queryAssetById(assetId string) (*asset.Asset, error) {
-	asset, err := asset.Get(assetId)
+func queryAssetByID(assetID string) (*asset.Asset, error) {
+	asset, err := asset.Get(assetID)
 	return asset, err
 }
 
@@ -31,7 +31,7 @@ func queryTransactions(queryParamsBuilder *tx.QueryParamsBuilder) ([]*tx.Tx, err
 	return txs, err
 }
 
-func queryTransactionById(txId string) (*tx.Tx, error) {
-	tx, err := tx.Get(txId)
+func queryTransactionByID(txID string) (*tx.Tx, error) {
+	tx, err := tx.Get(txID)
 	return tx, err
 }

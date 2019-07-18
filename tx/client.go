@@ -11,13 +11,13 @@ import (
 	"github.com/bitmark-inc/bitmark-sdk-go/utils"
 )
 
-func Get(txId string) (*Tx, error) {
+func Get(txID string) (*Tx, error) {
 	client := sdk.GetAPIClient()
 
 	vals := url.Values{}
 	vals.Set("pending", "true")
 
-	req, err := client.NewRequest("GET", fmt.Sprintf("/v3/txs/%s?%s", txId, vals.Encode()), nil)
+	req, err := client.NewRequest("GET", fmt.Sprintf("/v3/txs/%s?%s", txID, vals.Encode()), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -32,14 +32,14 @@ func Get(txId string) (*Tx, error) {
 	return result.Tx, nil
 }
 
-func GetWithAsset(txId string) (*Tx, *asset.Asset, error) {
+func GetWithAsset(txID string) (*Tx, *asset.Asset, error) {
 	client := sdk.GetAPIClient()
 
 	vals := url.Values{}
 	vals.Set("pending", "true")
 	vals.Set("asset", "true")
 
-	req, err := client.NewRequest("GET", fmt.Sprintf("/v3/txs/%s?%s", txId, vals.Encode()), nil)
+	req, err := client.NewRequest("GET", fmt.Sprintf("/v3/txs/%s?%s", txID, vals.Encode()), nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -101,8 +101,8 @@ func (ub *QueryParamsBuilder) OwnedByWithTransient(owner string) *QueryParamsBui
 	return ub
 }
 
-func (ub *QueryParamsBuilder) ReferencedBitmark(bitmarkId string) *QueryParamsBuilder {
-	ub.params.Set("bitmark_id", bitmarkId)
+func (ub *QueryParamsBuilder) ReferencedBitmark(bitmarkID string) *QueryParamsBuilder {
+	ub.params.Set("bitmark_id", bitmarkID)
 	return ub
 }
 
@@ -111,8 +111,8 @@ func (ub *QueryParamsBuilder) ReferencedBlockNumber(blockNumber int64) *QueryPar
 	return ub
 }
 
-func (ub *QueryParamsBuilder) ReferencedAsset(assetId string) *QueryParamsBuilder {
-	ub.params.Set("asset_id", assetId)
+func (ub *QueryParamsBuilder) ReferencedAsset(assetID string) *QueryParamsBuilder {
+	ub.params.Set("asset_id", assetID)
 	return ub
 }
 
