@@ -215,7 +215,9 @@ func (q *QueryTestSuite) TestListNonExsitingTxs() {
 	q.Equal(len(txs), 0)
 }
 
+/*
 func printBeautifulJSON(t *testing.T, v interface{}) {
 	item, _ := json.MarshalIndent(v, "", "\t")
 	t.Log("\n" + string(item))
 }
+*/
