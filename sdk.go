@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-// Nework - indicates which network to connect
+// Network - indicates which network to connect
 type Network string
 
 // Config - struct that initialize the API client connection
