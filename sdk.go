@@ -10,6 +10,9 @@ import (
 	"strings"
 )
 
+// Nework - it indicates what network we will connect
+type Network string
+
 // Config - struct that initialize the API client connection
 type Config struct {
 	Network    Network
@@ -21,9 +24,6 @@ var (
 	config    *Config
 	apiClient *BackendImplementation
 )
-
-// Nework - it indicates what network we will connect
-type Network string
 
 const (
 	// Livenet - Defines the network type live
@@ -67,17 +67,17 @@ func GetNetwork() Network {
 	return config.Network
 }
 
-// GetAPIClient - returns the API client
-func GetAPIClient() *BackendImplementation {
-	return apiClient
-}
-
 // BackendImplementation - structure used by the API client
 type BackendImplementation struct {
 	HTTPClient        *http.Client
 	URLAuthority      string
 	APIToken          string
 	MaxNetworkRetries int
+}
+
+// GetAPIClient - returns the API client
+func GetAPIClient() *BackendImplementation {
+	return apiClient
 }
 
 // NewRequest - returns a new Request given a method, URL and body
