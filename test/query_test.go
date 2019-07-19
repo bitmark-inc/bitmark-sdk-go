@@ -1,7 +1,7 @@
 package test
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"github.com/stretchr/testify/suite"
 	"testing"
 	"time"
@@ -31,7 +31,7 @@ func (q *QueryTestSuite) TestGetAsset() {
 
 	createdAt, _ := time.Parse("2006-01-02T15:04:05.000000Z", "2018-09-07T07:46:25.000000Z")
 	expected := &asset.Asset{
-		Id:   "2bc5189e77b55f8f671c62cb46650c3b0fa9f6219509427ea3f146de30d79d5598cdfab4ef754e19d1d8a0e4033d1e48adb92c0d83b74d00094c354f4948dc22",
+		ID:   "2bc5189e77b55f8f671c62cb46650c3b0fa9f6219509427ea3f146de30d79d5598cdfab4ef754e19d1d8a0e4033d1e48adb92c0d83b74d00094c354f4948dc22",
 		Name: "HA25124377",
 		Metadata: map[string]string{
 			"Source":     "Bitmark Health",
@@ -66,16 +66,16 @@ func (q *QueryTestSuite) TestListAssetByAtAndTo() {
 	}
 }
 
-func (q *QueryTestSuite) TestListAssetByAssetIds() {
-	existingAssetIds := []string{
+func (q *QueryTestSuite) TestListAssetByAssetIDs() {
+	existingAssetIDs := []string{
 		"c54294134a632c478e978bcd7088e368828474a0d3716b884dd16c2a397edff357e76f90163061934f2c2acba1a77a5dcf6833beca000992e63e19dfaa5aee2a",
 		"81c8b35d99bf89e561153a774bbbb57dde490be1cad98fe6e1e1cbb3b3e2520a00e854882fa5dfaf1118630ecca53171a74df24383fe44fa6a571fba9d235738"}
 
-	builder := asset.NewQueryParamsBuilder().AssetIds(existingAssetIds)
+	builder := asset.NewQueryParamsBuilder().AssetIDs(existingAssetIDs)
 
 	assets, err := asset.List(builder)
 	q.NoError(err)
-	q.True(len(assets) == len(existingAssetIds))
+	q.True(len(assets) == len(existingAssetIDs))
 }
 
 func (q *QueryTestSuite) TestListNonExistingAssets() {
@@ -85,21 +85,21 @@ func (q *QueryTestSuite) TestListNonExistingAssets() {
 }
 
 func (q *QueryTestSuite) TestGetBitmark() {
-	bitmarkId := "5b00a0395e1fa2ff4771f43d986efdae7847500bbe2736ca1823f7aa97ce8fef"
-	bitmark, err := bitmark.Get(bitmarkId)
+	bitmarkID := "5b00a0395e1fa2ff4771f43d986efdae7847500bbe2736ca1823f7aa97ce8fef"
+	bitmark, err := bitmark.Get(bitmarkID)
 	q.NoError(err)
-	q.Equal(bitmark.Id, bitmarkId)
+	q.Equal(bitmark.ID, bitmarkID)
 }
 
 func (q *QueryTestSuite) TestGetBitmarkWithAsset() {
-	bitmarkId := "5b00a0395e1fa2ff4771f43d986efdae7847500bbe2736ca1823f7aa97ce8fef"
-	assetId := "0e0b4e3bd771811d35a23707ba6197aa1dd5937439a221eaf8e7909309e7b31b6c0e06a1001c261a099abf04c560199db898bc154cf128aa9efa5efd36030c64"
+	bitmarkID := "5b00a0395e1fa2ff4771f43d986efdae7847500bbe2736ca1823f7aa97ce8fef"
+	assetID := "0e0b4e3bd771811d35a23707ba6197aa1dd5937439a221eaf8e7909309e7b31b6c0e06a1001c261a099abf04c560199db898bc154cf128aa9efa5efd36030c64"
 
-	bitmark, asset, err := bitmark.GetWithAsset(bitmarkId)
+	bitmark, asset, err := bitmark.GetWithAsset(bitmarkID)
 	q.NoError(err)
 
-	q.Equal(bitmark.Id, bitmarkId)
-	q.Equal(asset.Id, assetId)
+	q.Equal(bitmark.ID, bitmarkID)
+	q.Equal(asset.ID, assetID)
 }
 
 func (q *QueryTestSuite) TestGetNonExistingBitmark() {
@@ -121,18 +121,18 @@ func (q *QueryTestSuite) TestListBitmark() {
 	q.True(len(bitmarks) <= limit)
 }
 
-func (q *QueryTestSuite) TestListBitmarkByBitmarkIds() {
-	existingBitmarkIds := []string{
+func (q *QueryTestSuite) TestListBitmarkByBitmarkIDs() {
+	existingBitmarkIDs := []string{
 		"889f46d55ddbf6fae2da6fe14ca31b79ab84fe7cd104de735dc8cf9319eb68b5",
 		"0d9a70dbad56820ac538417be3cacdcb643f295a1f2cf4812ad9fb4b56818221"}
 
 	builder := bitmark.NewQueryParamsBuilder().
-		BitmarkIds(existingBitmarkIds)
+		BitmarkIDs(existingBitmarkIDs)
 
 	bitmarks, _, err := bitmark.List(builder)
 	q.NoError(err)
 
-	q.Equal(len(bitmarks), len(existingBitmarkIds), "The length should be the same.")
+	q.Equal(len(bitmarks), len(existingBitmarkIDs), "The length should be the same.")
 }
 
 func (q *QueryTestSuite) TestListBitmarkByAtAndTo() {
@@ -157,10 +157,10 @@ func (q *QueryTestSuite) TestListNonExistingBitmarks() {
 }
 
 func (q *QueryTestSuite) TestGetTx() {
-	txId := "67ef8bfee0ef7b8c33eda34ba21c8b2b0fbff601a7021984b2e27985251a0a80"
-	actual, err := tx.Get(txId)
+	txID := "67ef8bfee0ef7b8c33eda34ba21c8b2b0fbff601a7021984b2e27985251a0a80"
+	actual, err := tx.Get(txID)
 	q.NoError(err)
-	q.Equal(actual.Id, txId)
+	q.Equal(actual.ID, txID)
 }
 
 func (q *QueryTestSuite) TestGetTxWithAsset() {
@@ -168,12 +168,12 @@ func (q *QueryTestSuite) TestGetTxWithAsset() {
 	q.NoError(err)
 
 	expected := &tx.Tx{
-		Id:      "67ef8bfee0ef7b8c33eda34ba21c8b2b0fbff601a7021984b2e27985251a0a80",
-		AssetId: "3c50d70e0fe78819e7755687003483523852ee6ecc59fe40a4e70e89496c4d45313c6d76141bc322ba56ad3f7cd9c906b951791208281ddba3ebb5e7ad83436c",
+		ID:      "67ef8bfee0ef7b8c33eda34ba21c8b2b0fbff601a7021984b2e27985251a0a80",
+		AssetID: "3c50d70e0fe78819e7755687003483523852ee6ecc59fe40a4e70e89496c4d45313c6d76141bc322ba56ad3f7cd9c906b951791208281ddba3ebb5e7ad83436c",
 	}
 
-	q.Equal(actualTx.Id, expected.Id)
-	q.Equal(actualAsset.Id, expected.AssetId)
+	q.Equal(actualTx.ID, expected.ID)
+	q.Equal(actualAsset.ID, expected.AssetID)
 }
 
 // FIXME
@@ -215,7 +215,9 @@ func (q *QueryTestSuite) TestListNonExsitingTxs() {
 	q.Equal(len(txs), 0)
 }
 
+/*
 func printBeautifulJSON(t *testing.T, v interface{}) {
 	item, _ := json.MarshalIndent(v, "", "\t")
 	t.Log("\n" + string(item))
 }
+*/

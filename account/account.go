@@ -356,7 +356,7 @@ func seedCoreToKeys(seedCore []byte, keyCount int, keySize int) ([][]byte, error
 
 	// add the seed 4 times to hash value
 	hash := sha3.NewShake256()
-	for i := 0; i < 4; i += 1 {
+	for i := 0; i < 4; i++ {
 		n, err := hash.Write(seedCore)
 		if err != nil {
 			return nil, err
@@ -368,7 +368,7 @@ func seedCoreToKeys(seedCore []byte, keyCount int, keySize int) ([][]byte, error
 
 	// generate count keys of size bytes
 	keys := make([][]byte, keyCount)
-	for i := 0; i < keyCount; i += 1 {
+	for i := 0; i < keyCount; i++ {
 		k := make([]byte, keySize)
 		n, err := hash.Read(k)
 		if err != nil {

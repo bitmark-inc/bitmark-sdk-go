@@ -81,13 +81,13 @@ func bytesToTwelveWords(input []byte, dict []string) ([]string, error) {
 	accumulator := 0
 	bits := 0
 	n := 0
-	for i := 0; i < len(input); i += 1 {
+	for i := 0; i < len(input); i++ {
 		accumulator = accumulator<<8 + int(input[i])
 		bits += 8
 		if bits >= 11 {
 			bits -= 11 // [ 11 bits] [offset bits]
 
-			n += 1
+			n++
 			index := accumulator >> uint(bits)
 			accumulator &= masks[bits]
 

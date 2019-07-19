@@ -36,14 +36,14 @@ func TestRegisterAsset(t *testing.T) {
 	})
 	sdk.GetAPIClient().URLAuthority = ts.URL
 
-	assetId, err := Register(&RegistrationParams{
+	assetID, err := Register(&RegistrationParams{
 		Name:        "",
 		Metadata:    "",
 		Fingerprint: "fingerprint",
 		Registrant:  "registrant",
 		Signature:   "signature",
 	})
-	assert.Equal(t, assetId, "asset_id")
+	assert.Equal(t, assetID, "asset_id")
 	assert.NoError(t, err)
 }
 
@@ -75,7 +75,7 @@ func TestGetAsset(t *testing.T) {
 
 	asset, err := Get("asset_id")
 	assert.Equal(t, asset, &Asset{
-		Id:          "be8af6c36ad4e4e15129fbbf6c2a6e75ac984a868cd9e76e75e8f60c5973b7722073dad1dbe4c70f6e65f4fbe42b100b1239ae48449cb75ec9367da47ce8d4a7",
+		ID:          "be8af6c36ad4e4e15129fbbf6c2a6e75ac984a868cd9e76e75e8f60c5973b7722073dad1dbe4c70f6e65f4fbe42b100b1239ae48449cb75ec9367da47ce8d4a7",
 		Name:        "Logo 1",
 		Metadata:    map[string]string{},
 		Fingerprint: "01eb9283dcbf7361b3534afdd6b7f24a784f06aae66498fd660a8f8dd8725b3759761ebc7124c7753095adb330c1e30223b407c2d049b8990c7edd173d8573eb18",
@@ -150,7 +150,7 @@ func TestListAsset(t *testing.T) {
 	assert.NoError(t, err)
 
 	builder = NewQueryParamsBuilder().
-		AssetIds([]string{"a", "b"}).
+		AssetIDs([]string{"a", "b"}).
 		RegisteredBy("r").
 		To(utils.Earlier).
 		At(3).

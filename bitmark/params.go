@@ -30,34 +30,34 @@ type IssuanceParams struct {
 }
 
 type IssueRequest struct {
-	AssetId   string `json:"asset_id" pack:"hex64"`
+	AssetID   string `json:"asset_id" pack:"hex64"`
 	Owner     string `json:"owner" pack:"account"`
 	Nonce     uint64 `json:"nonce" pack:"uint64"`
 	Signature string `json:"signature"`
 }
 
-func NewIssuanceParams(assetId string, quantity int) *IssuanceParams {
+func NewIssuanceParams(assetID string, quantity int) *IssuanceParams {
 	ip := &IssuanceParams{
 		Issuances: make([]*IssueRequest, 0),
 	}
 
-	builder := NewQueryParamsBuilder().ReferencedAsset(assetId)
+	builder := NewQueryParamsBuilder().ReferencedAsset(assetID)
 	bitmarks, _, _ := List(builder)
 	if len(bitmarks) == 0 {
 		issuance := &IssueRequest{
-			AssetId: assetId,
+			AssetID: assetID,
 			Nonce:   0,
 		}
 		ip.Issuances = append(ip.Issuances, issuance)
 
-		quantity -= 1
+		quantity--
 	}
 
 	for i := 0; i < quantity; i++ {
 		atomic.AddUint64(&nonceIndex, 1)
 		nonce := uint64(time.Now().UTC().Unix())*1000 + nonceIndex%1000
 		issuance := &IssueRequest{
-			AssetId: assetId,
+			AssetID: assetID,
 			Nonce:   nonce,
 		}
 		ip.Issuances = append(ip.Issuances, issuance)
@@ -112,19 +112,19 @@ func NewTransferParams(receiver string) (*TransferParams, error) {
 }
 
 // FromBitmark sets link asynchronously
-func (t *TransferParams) FromBitmark(bitmarkId string) error {
-	bitmark, err := Get(bitmarkId)
+func (t *TransferParams) FromBitmark(bitmarkID string) error {
+	bitmark, err := Get(bitmarkID)
 	if err != nil {
 		return err
 	}
 
-	t.Transfer.Link = bitmark.LatestTxId
+	t.Transfer.Link = bitmark.LatestTxID
 	return nil
 }
 
 // FromLatestTx sets link synchronously
-func (t *TransferParams) FromLatestTx(txId string) {
-	t.Transfer.Link = txId
+func (t *TransferParams) FromLatestTx(txID string) {
+	t.Transfer.Link = txID
 }
 
 func (t *TransferParams) Sign(sender account.Account) error {
@@ -158,12 +158,12 @@ func NewShareParams(quantity uint64) *ShareParams {
 }
 
 // FromBitmark will set the latest transaction for a target bitmark
-func (s *ShareParams) FromBitmark(bitmarkId string) error {
-	bitmark, err := Get(bitmarkId)
+func (s *ShareParams) FromBitmark(bitmarkID string) error {
+	bitmark, err := Get(bitmarkID)
 	if err != nil {
 		return err
 	}
-	s.Share.Link = bitmark.LatestTxId
+	s.Share.Link = bitmark.LatestTxID
 	return nil
 }
 
@@ -179,7 +179,7 @@ func (s *ShareParams) Sign(creator account.Account) error {
 
 // Copy of bitmark share granting structure
 type GrantRequest struct {
-	ShareId     string `json:"shareId" pack:"hex32"`
+	ShareID     string `json:"shareID" pack:"hex32"`
 	Quantity    uint64 `json:"quantity" pack:"uint64"`
 	Owner       string `json:"owner" pack:"account"`
 	Recipient   string `json:"recipient" pack:"account"`
@@ -194,10 +194,10 @@ type ShareGrantingParams struct {
 }
 
 // NewShareGrantingParams returns ShareGrantingParams
-func NewShareGrantingParams(shareId string, receiver string, quantity uint64, extraInfo map[string]interface{}) *ShareGrantingParams {
+func NewShareGrantingParams(shareID string, receiver string, quantity uint64, extraInfo map[string]interface{}) *ShareGrantingParams {
 	return &ShareGrantingParams{
 		Grant: &GrantRequest{
-			ShareId:   shareId,
+			ShareID:   shareID,
 			Recipient: receiver,
 			Quantity:  quantity,
 		},
@@ -224,7 +224,7 @@ func (s *ShareGrantingParams) Sign(granter account.Account) error {
 
 // Copy of bitmark share granting structure with counter signature
 type CountersignedGrantRequest struct {
-	ShareId          string `json:"shareId" pack:"hex32"`
+	ShareID          string `json:"shareID" pack:"hex32"`
 	Quantity         uint64 `json:"quantity" pack:"uint64"`
 	Owner            string `json:"owner" pack:"account"`
 	Recipient        string `json:"recipient" pack:"account"`
@@ -235,7 +235,7 @@ type CountersignedGrantRequest struct {
 
 // GrantResponseParams is the parameter for respond a share granting request
 type GrantResponseParams struct {
-	Id               string              `json:"id"`
+	ID               string              `json:"id"`
 	Action           OfferResponseAction `json:"action"`
 	Countersignature string              `json:"countersignature"`
 	auth             http.Header
@@ -247,7 +247,7 @@ func (g *GrantResponseParams) Sign(receiver account.Account) error {
 	ts := strconv.FormatInt(time.Now().UnixNano()/1000000, 10)
 	parts := []string{
 		"updateOffer",
-		g.Id,
+		g.ID,
 		receiver.AccountNumber(),
 		ts,
 	}
@@ -270,11 +270,11 @@ func (g *GrantResponseParams) Sign(receiver account.Account) error {
 // NewGrantResponseParams returns GrantResponseParams
 func NewGrantResponseParams(id string, grant *GrantRequest, action OfferResponseAction) *GrantResponseParams {
 	return &GrantResponseParams{
-		Id:     id,
+		ID:     id,
 		Action: action,
 		auth:   make(http.Header),
 		record: &CountersignedGrantRequest{
-			ShareId:     grant.ShareId,
+			ShareID:     grant.ShareID,
 			Quantity:    grant.Quantity,
 			Owner:       grant.Owner,
 			Recipient:   grant.Recipient,
@@ -286,10 +286,10 @@ func NewGrantResponseParams(id string, grant *GrantRequest, action OfferResponse
 
 // Copy of bitmark share swap structure
 type SwapRequest struct {
-	ShareIdOne  string `json:"shareIdOne" pack:"hex32"`   // share = issue id
+	ShareIDOne  string `json:"shareIDOne" pack:"hex32"`   // share = issue id
 	QuantityOne uint64 `json:"quantityOne" pack:"uint64"` // shares to transfer > 0
 	OwnerOne    string `json:"ownerOne" pack:"account"`   // base58
-	ShareIdTwo  string `json:"shareIdTwo" pack:"hex32"`   // share = issue id
+	ShareIDTwo  string `json:"shareIDTwo" pack:"hex32"`   // share = issue id
 	QuantityTwo uint64 `json:"quantityTwo" pack:"uint64"` // shares to transfer > 0
 	OwnerTwo    string `json:"ownerTwo" pack:"account"`   // base58
 	BeforeBlock uint64 `json:"beforeBlock" pack:"uint64"` // expires when chain height > before block
@@ -302,16 +302,16 @@ type ShareSwapParams struct {
 }
 
 // FromShare will assign the first share for swaping
-func (p *ShareSwapParams) FromShare(shareId, owner string, quantity uint64) *ShareSwapParams {
-	p.Swap.ShareIdOne = shareId
+func (p *ShareSwapParams) FromShare(shareID, owner string, quantity uint64) *ShareSwapParams {
+	p.Swap.ShareIDOne = shareID
 	p.Swap.OwnerOne = owner
 	p.Swap.QuantityOne = quantity
 	return p
 }
 
 // ToShare will assign the second share for swaping
-func (p *ShareSwapParams) ToShare(shareId, owner string, quantity uint64) *ShareSwapParams {
-	p.Swap.ShareIdTwo = shareId
+func (p *ShareSwapParams) ToShare(shareID, owner string, quantity uint64) *ShareSwapParams {
+	p.Swap.ShareIDTwo = shareID
 	p.Swap.OwnerTwo = owner
 	p.Swap.QuantityTwo = quantity
 	return p
@@ -338,10 +338,10 @@ func NewShareSwapParams(beforeBlock uint64) *ShareSwapParams {
 
 // Copy of bitmark share swap structure with counter signature
 type CountersignedSwapRequest struct {
-	ShareIdOne       string `json:"shareIdOne" pack:"hex32"`   // share = issue id
+	ShareIDOne       string `json:"shareIDOne" pack:"hex32"`   // share = issue id
 	QuantityOne      uint64 `json:"quantityOne" pack:"uint64"` // shares to transfer > 0
 	OwnerOne         string `json:"ownerOne" pack:"account"`   // base58
-	ShareIdTwo       string `json:"shareIdTwo" pack:"hex32"`   // share = issue id
+	ShareIDTwo       string `json:"shareIDTwo" pack:"hex32"`   // share = issue id
 	QuantityTwo      uint64 `json:"quantityTwo" pack:"uint64"` // shares to transfer > 0
 	OwnerTwo         string `json:"ownerTwo" pack:"account"`   // base58
 	BeforeBlock      uint64 `json:"beforeBlock" pack:"uint64"` // expires when chain height > before block
@@ -351,7 +351,7 @@ type CountersignedSwapRequest struct {
 
 // ShareSwapParams is the parameter for responding swaping shares between two accounts via core api
 type SwapResponseParams struct {
-	Id               string              `json:"id"`
+	ID               string              `json:"id"`
 	Action           OfferResponseAction `json:"action"`
 	Countersignature string              `json:"countersignature"`
 	auth             http.Header
@@ -375,10 +375,10 @@ func NewSwapResponseParams(swap *SwapRequest, action OfferResponseAction) *SwapR
 		Action: action,
 		auth:   make(http.Header),
 		record: &CountersignedSwapRequest{
-			ShareIdOne:  swap.ShareIdOne,
+			ShareIDOne:  swap.ShareIDOne,
 			QuantityOne: swap.QuantityOne,
 			OwnerOne:    swap.OwnerOne,
-			ShareIdTwo:  swap.ShareIdTwo,
+			ShareIDTwo:  swap.ShareIDTwo,
 			QuantityTwo: swap.QuantityTwo,
 			OwnerTwo:    swap.OwnerTwo,
 			BeforeBlock: swap.BeforeBlock,
@@ -414,19 +414,19 @@ func NewOfferParams(receiver string, info map[string]interface{}) (*OfferParams,
 }
 
 // FromBitmark sets link asynchronously
-func (o *OfferParams) FromBitmark(bitmarkId string) error {
-	bitmark, err := Get(bitmarkId)
+func (o *OfferParams) FromBitmark(bitmarkID string) error {
+	bitmark, err := Get(bitmarkID)
 	if err != nil {
 		return err
 	}
 
-	o.Offer.Transfer.Link = bitmark.LatestTxId
+	o.Offer.Transfer.Link = bitmark.LatestTxID
 	return nil
 }
 
 // FromLatestTx sets link synchronously
-func (o *OfferParams) FromLatestTx(txId string) {
-	o.Offer.Transfer.Link = txId
+func (o *OfferParams) FromLatestTx(txID string) {
+	o.Offer.Transfer.Link = txID
 }
 
 func (o *OfferParams) Sign(sender account.Account) error {
@@ -447,7 +447,7 @@ type CountersignedTransferRequest struct {
 }
 
 type ResponseParams struct {
-	Id               string              `json:"id"`
+	ID               string              `json:"id"`
 	Action           OfferResponseAction `json:"action"`
 	Countersignature string              `json:"countersignature"`
 	auth             http.Header
@@ -456,7 +456,7 @@ type ResponseParams struct {
 
 func NewTransferResponseParams(bitmark *Bitmark, action OfferResponseAction) *ResponseParams {
 	return &ResponseParams{
-		Id:     bitmark.Offer.Id,
+		ID:     bitmark.Offer.ID,
 		Action: action,
 		auth:   make(http.Header),
 		record: bitmark.Offer.Record,
@@ -467,7 +467,7 @@ func (r *ResponseParams) Sign(acct account.Account) error {
 	ts := strconv.FormatInt(time.Now().UnixNano()/1000000, 10)
 	parts := []string{
 		"updateOffer",
-		r.Id,
+		r.ID,
 		acct.AccountNumber(),
 		ts,
 	}

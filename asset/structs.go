@@ -3,7 +3,7 @@ package asset
 import "time"
 
 type Asset struct {
-	Id          string            `json:"id"`
+	ID          string            `json:"id"`
 	Name        string            `json:"name"`
 	Metadata    map[string]string `json:"metadata"`
 	Fingerprint string            `json:"fingerprint"`

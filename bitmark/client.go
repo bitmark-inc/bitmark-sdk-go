@@ -14,7 +14,7 @@ import (
 )
 
 type txItem struct {
-	TxId string `json:"txId"`
+	TxID string `json:"txID"`
 }
 
 func Issue(params *IssuanceParams) ([]string, error) {
@@ -32,19 +32,19 @@ func Issue(params *IssuanceParams) ([]string, error) {
 
 	var result struct {
 		Bitmarks []struct {
-			Id string `json:"id"`
+			ID string `json:"id"`
 		} `json:"bitmarks"`
 	}
 	if err := client.Do(req, &result); err != nil {
 		return nil, err
 	}
 
-	bitmarkIds := make([]string, 0)
+	bitmarkIDs := make([]string, 0)
 	for _, item := range result.Bitmarks {
-		bitmarkIds = append(bitmarkIds, item.Id)
+		bitmarkIDs = append(bitmarkIDs, item.ID)
 	}
 
-	return bitmarkIds, nil
+	return bitmarkIDs, nil
 }
 
 func Transfer(params *TransferParams) (string, error) {
@@ -65,7 +65,7 @@ func Transfer(params *TransferParams) (string, error) {
 		return "", err
 	}
 
-	return result.TxId, nil
+	return result.TxID, nil
 }
 
 func Offer(params *OfferParams) error {
@@ -112,7 +112,7 @@ func Respond(params *ResponseParams) (string, error) {
 		return "", err
 	}
 
-	return result.TxId, nil
+	return result.TxID, nil
 }
 
 func CreateShares(params *ShareParams) (string, string, error) {
@@ -129,14 +129,14 @@ func CreateShares(params *ShareParams) (string, string, error) {
 	}
 
 	var result struct {
-		TxId    string `json:"tx_id"`
-		ShareId string `json:"share_id"`
+		TxID    string `json:"tx_id"`
+		ShareID string `json:"share_id"`
 	}
 	if err := client.Do(req, &result); err != nil {
 		return "", "", err
 	}
 
-	return result.TxId, result.ShareId, nil
+	return result.TxID, result.ShareID, nil
 }
 
 func GrantShare(params *ShareGrantingParams) (string, error) {
@@ -153,10 +153,10 @@ func GrantShare(params *ShareGrantingParams) (string, error) {
 	}
 
 	var result struct {
-		OfferId string `json:"offer_id"`
+		OfferID string `json:"offer_id"`
 	}
 	err = client.Do(req, &result)
-	return result.OfferId, err
+	return result.OfferID, err
 }
 
 func ReplyShareOffer(params *GrantResponseParams) (string, error) {
@@ -178,16 +178,16 @@ func ReplyShareOffer(params *GrantResponseParams) (string, error) {
 
 	var result txItem
 	err = client.Do(req, &result)
-	return result.TxId, err
+	return result.TxID, err
 }
 
-func Get(bitmarkId string) (*Bitmark, error) {
+func Get(bitmarkID string) (*Bitmark, error) {
 	client := sdk.GetAPIClient()
 
 	vals := url.Values{}
 	vals.Set("pending", "true")
 
-	req, err := client.NewRequest("GET", fmt.Sprintf("/v3/bitmarks/%s?%s", bitmarkId, vals.Encode()), nil)
+	req, err := client.NewRequest("GET", fmt.Sprintf("/v3/bitmarks/%s?%s", bitmarkID, vals.Encode()), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -202,14 +202,14 @@ func Get(bitmarkId string) (*Bitmark, error) {
 	return result.Bitmark, nil
 }
 
-func GetWithAsset(bitmarkId string) (*Bitmark, *asset.Asset, error) {
+func GetWithAsset(bitmarkID string) (*Bitmark, *asset.Asset, error) {
 	client := sdk.GetAPIClient()
 
 	vals := url.Values{}
 	vals.Set("pending", "true")
 	vals.Set("asset", "true")
 
-	req, err := client.NewRequest("GET", fmt.Sprintf("/v3/bitmarks/%s?%s", bitmarkId, vals.Encode()), nil)
+	req, err := client.NewRequest("GET", fmt.Sprintf("/v3/bitmarks/%s?%s", bitmarkID, vals.Encode()), nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -251,10 +251,10 @@ func List(builder *QueryParamsBuilder) ([]*Bitmark, []*asset.Asset, error) {
 	return result.Bitmarks, result.Assets, nil
 }
 
-func GetShareBalance(shareId, owner string) (*Share, error) {
+func GetShareBalance(shareID, owner string) (*Share, error) {
 	client := sdk.GetAPIClient()
 
-	req, err := client.NewRequest("GET", fmt.Sprintf("/v3/shares?share_id=%s&owner=%s", shareId, owner), nil)
+	req, err := client.NewRequest("GET", fmt.Sprintf("/v3/shares?share_id=%s&owner=%s", shareID, owner), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -338,15 +338,15 @@ func (ub *QueryParamsBuilder) OfferTo(receiver string) *QueryParamsBuilder {
 	return ub
 }
 
-func (ub *QueryParamsBuilder) BitmarkIds(bitmarkIds []string) *QueryParamsBuilder {
-	for _, bitmarkId := range bitmarkIds {
-		ub.params.Add("bitmark_ids", bitmarkId)
+func (ub *QueryParamsBuilder) BitmarkIDs(bitmarkIDs []string) *QueryParamsBuilder {
+	for _, bitmarkID := range bitmarkIDs {
+		ub.params.Add("bitmark_ids", bitmarkID)
 	}
 	return ub
 }
 
-func (ub *QueryParamsBuilder) ReferencedAsset(assetId string) *QueryParamsBuilder {
-	ub.params.Set("asset_id", assetId)
+func (ub *QueryParamsBuilder) ReferencedAsset(assetID string) *QueryParamsBuilder {
+	ub.params.Set("asset_id", assetID)
 	return ub
 }
 

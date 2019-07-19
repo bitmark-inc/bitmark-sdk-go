@@ -8,10 +8,10 @@ import (
 )
 
 type Bitmark struct {
-	Id          string         `json:"id"`
-	AssetId     string         `json:"asset_id"`
+	ID          string         `json:"id"`
+	AssetID     string         `json:"asset_id"`
 	Asset       *asset.Asset   `json:"asset"`
-	LatestTxId  string         `json:"head_id"` // TODO: rename api field
+	LatestTxID  string         `json:"head_id"` // TODO: rename api field
 	Issuer      string         `json:"issuer"`
 	Owner       string         `json:"owner"`
 	Status      string         `json:"status"` // issuing, transferring, offering, settled
@@ -23,7 +23,7 @@ type Bitmark struct {
 }
 
 type TransferOffer struct {
-	Id        string                        `json:"id"`
+	ID        string                        `json:"id"`
 	From      string                        `json:"from"`
 	To        string                        `json:"to"`
 	Record    *CountersignedTransferRequest `json:"record"`
@@ -33,15 +33,15 @@ type TransferOffer struct {
 }
 
 type Share struct {
-	Id        string `json:"share_id"`
+	ID        string `json:"share_id"`
 	Owner     string `json:"owner"`
 	Balance   uint64 `json:"balance"`
 	Available uint64 `json:"available"`
 }
 
 type ShareOffer struct {
-	Id        string          `json:"id"`
-	ShareId   string          `json:"share_id"`
+	ID        string          `json:"id"`
+	ShareID   string          `json:"share_id"`
 	From      string          `json:"from"`
 	To        string          `json:"to"`
 	Record    GrantRequest    `json:"record"`

@@ -16,7 +16,7 @@ type registrationRequest struct {
 }
 
 type registeredItem struct {
-	Id        string `json:"id"`
+	ID        string `json:"id"`
 	Duplicate bool   `json:"duplicate"`
 }
 
@@ -36,13 +36,13 @@ func Register(params *RegistrationParams) (string, error) {
 	if err := client.Do(req, &result); err != nil {
 		return "", err
 	}
-	return result.Assets[0].Id, nil
+	return result.Assets[0].ID, nil
 }
 
-func Get(assetId string) (*Asset, error) {
+func Get(assetID string) (*Asset, error) {
 	client := sdk.GetAPIClient()
 
-	req, err := client.NewRequest("GET", "/v3/assets/"+assetId+"?pending=true", nil)
+	req, err := client.NewRequest("GET", "/v3/assets/"+assetID+"?pending=true", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -96,9 +96,9 @@ func (qb *QueryParamsBuilder) RegisteredBy(registrant string) *QueryParamsBuilde
 	return qb
 }
 
-func (qb *QueryParamsBuilder) AssetIds(assetIds []string) *QueryParamsBuilder {
-	for _, assetId := range assetIds {
-		qb.params.Add("asset_ids", assetId)
+func (qb *QueryParamsBuilder) AssetIDs(assetIDs []string) *QueryParamsBuilder {
+	for _, assetID := range assetIDs {
+		qb.params.Add("asset_ids", assetID)
 	}
 	return qb
 }

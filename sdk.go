@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+// Network - indicates which network to connect
+type Network string
+
+// Config - struct that initialize the API client connection
 type Config struct {
 	Network    Network
 	HTTPClient *http.Client
@@ -21,13 +25,14 @@ var (
 	apiClient *BackendImplementation
 )
 
-type Network string
-
 const (
+	// Livenet - Defines the network type live
 	Livenet = Network("livenet")
+	// Testnet - Defines the network type test
 	Testnet = Network("testnet")
 )
 
+// APIError - struct that holds the API errors
 type APIError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -38,6 +43,7 @@ func (ae *APIError) Error() string {
 	return fmt.Sprintf("[%d] message: %s reason: %s", ae.Code, ae.Message, ae.Reason)
 }
 
+// Init - SDK initialization
 func Init(cfg *Config) {
 	config = cfg
 	switch cfg.Network {
@@ -56,14 +62,12 @@ func Init(cfg *Config) {
 	}
 }
 
+// GetNetwork - returns the network used
 func GetNetwork() Network {
 	return config.Network
 }
 
-func GetAPIClient() *BackendImplementation {
-	return apiClient
-}
-
+// BackendImplementation - structure used by the API client
 type BackendImplementation struct {
 	HTTPClient        *http.Client
 	URLAuthority      string
@@ -71,6 +75,12 @@ type BackendImplementation struct {
 	MaxNetworkRetries int
 }
 
+// GetAPIClient - returns the API client
+func GetAPIClient() *BackendImplementation {
+	return apiClient
+}
+
+// NewRequest - returns a new Request given a method, URL and body
 func (s *BackendImplementation) NewRequest(method, path string, body io.Reader) (*http.Request, error) {
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
@@ -91,6 +101,7 @@ func (s *BackendImplementation) NewRequest(method, path string, body io.Reader) 
 	return req, nil
 }
 
+// Do - sends an HTTP request
 func (s *BackendImplementation) Do(req *http.Request, v interface{}) error {
 	resp, err := s.HTTPClient.Do(req)
 	if err != nil {

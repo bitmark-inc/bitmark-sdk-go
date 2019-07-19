@@ -5,15 +5,15 @@ import (
 )
 
 type Tx struct {
-	Id           string `json:"id"`
-	BitmarkId    string `json:"bitmark_id"`
-	AssetId      string `json:"asset_id"`
+	ID           string `json:"id"`
+	BitmarkID    string `json:"bitmark_id"`
+	AssetID      string `json:"asset_id"`
 	Asset        *asset.Asset
 	Owner        string `json:"owner"`
 	Status       string `json:"status"`
 	BlockNumber  int    `json:"block_number"`
 	Sequence     int    `json:"offset"`
-	PreviousId   string `json:"previous_id"`
+	PreviousID   string `json:"previous_id"`
 	Confirmation uint64 `json:"confirmation"`
 
 	ShareInfo map[string]interface{} `json:"share_info,omitempty"`
