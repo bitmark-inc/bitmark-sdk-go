@@ -7,14 +7,11 @@ package bitmark
 import (
 	"encoding/json"
 	"time"
-
-	"github.com/bitmark-inc/bitmark-sdk-go/asset"
 )
 
 type Bitmark struct {
 	ID          string         `json:"id"`
 	AssetID     string         `json:"asset_id"`
-	Asset       *asset.Asset   `json:"asset"`
 	LatestTxID  string         `json:"head_id"` // TODO: rename api field
 	Issuer      string         `json:"issuer"`
 	Owner       string         `json:"owner"`
