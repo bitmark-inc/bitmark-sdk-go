@@ -181,7 +181,6 @@ func FromSeed(seedBase58Encoded string) (Account, error) {
 func FromRecoveryPhrase(words []string, lang language.Tag) (Account, error) {
 	dict, err := getBIP39Dict(lang)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 
