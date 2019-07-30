@@ -179,9 +179,14 @@ func FromSeed(seedBase58Encoded string) (Account, error) {
 }
 
 func FromRecoveryPhrase(words []string, lang language.Tag) (Account, error) {
+	dict, err := getBIP39Dict(lang)
+	if err != nil {
+		return nil, err
+	}
+
 	switch len(words) {
 	case recoveryPhraseV1Length:
-		b, err := twentyFourWordsToBytes(words)
+		b, err := twentyFourWordsToBytes(words, dict)
 		if err != nil {
 			return nil, err
 		}
@@ -206,11 +211,6 @@ func FromRecoveryPhrase(words []string, lang language.Tag) (Account, error) {
 
 		return NewAccountV1(core)
 	case recoveryPhraseV2Length:
-		dict, err := getBIP39Dict(lang)
-		if err != nil {
-			return nil, err
-		}
-
 		core, err := twelveWordsToByteswords(words, dict)
 		if err != nil {
 			return nil, err

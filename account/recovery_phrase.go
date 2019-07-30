@@ -45,7 +45,7 @@ func bytesToTwentyFourWords(input []byte) ([]string, error) {
 }
 
 // 24 words to 33 bytes
-func twentyFourWordsToBytes(words []string) ([]byte, error) {
+func twentyFourWordsToBytes(words []string, dict []string) ([]byte, error) {
 	if 24 != len(words) {
 		return nil, fmt.Errorf("number of words: %d expected: 24", len(words))
 	}
@@ -57,7 +57,7 @@ func twentyFourWordsToBytes(words []string) ([]byte, error) {
 	for _, word := range words {
 		n := -1
 	loop:
-		for i, bip := range bip39.English {
+		for i, bip := range dict {
 			if word == bip {
 				n = i
 				break loop

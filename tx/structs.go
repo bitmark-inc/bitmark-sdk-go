@@ -4,15 +4,10 @@
 // license that can be found in the LICENSE file.
 package tx
 
-import (
-	"github.com/bitmark-inc/bitmark-sdk-go/asset"
-)
-
 type Tx struct {
 	ID           string `json:"id"`
 	BitmarkID    string `json:"bitmark_id"`
 	AssetID      string `json:"asset_id"`
-	Asset        *asset.Asset
 	Owner        string `json:"owner"`
 	Status       string `json:"status"`
 	BlockNumber  int    `json:"block_number"`
