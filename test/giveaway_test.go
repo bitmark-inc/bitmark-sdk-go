@@ -24,7 +24,6 @@ func NewGiveawayTestSuite(bitmarkCount int) *GiveawayTestSuite {
 
 func (s *GiveawayTestSuite) TestDirectTransfer() {
 	bitmarkID := s.bitmarkIDs[s.bitmarkIndex]
-	fmt.Println(bitmarkID)
 	s.T().Logf("bitmark_id=%s", bitmarkID)
 
 	s.mustDirectTransfer(bitmarkID) // able to transfer right after the bitmark is issued
