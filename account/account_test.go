@@ -262,10 +262,13 @@ func TestValidateAccountNumber(t *testing.T) {
 
 func TestRecoverV1Account(t *testing.T) {
 	sdk.Init(&sdk.Config{Network: sdk.Testnet})
-	acctFromPhrase, err := FromRecoveryPhrase(
-		strings.Split("為 廠 磨 燕 華 已 忍 罵 稍 桌 搜 事 伴 爐 調 拜 輝 荒 巡 只 僚 空 之 填", " "),
-		language.TraditionalChinese,
-	)
+
+	phrase := "為 廠 磨 燕 華 已 忍 罵 稍 桌 搜 事 伴 爐 調 拜 輝 荒 巡 只 僚 空 之 填"
+	acctFromPhrase, err := FromRecoveryPhrase(strings.Split(phrase, " "), language.TraditionalChinese)
 	assert.NoError(t, err)
 	assert.Equal(t, "fBHRe9f7g3vQgpyq8NGar3QVMfCSPNfDeKPYF5Maef6gCYKsP4", acctFromPhrase.AccountNumber())
+
+	recoveredPhrase, err := acctFromPhrase.RecoveryPhrase(language.TraditionalChinese)
+	assert.NoError(t, err)
+	assert.Equal(t, phrase, strings.Join(recoveredPhrase, " "))
 }

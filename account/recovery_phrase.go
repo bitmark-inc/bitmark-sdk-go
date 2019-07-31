@@ -15,8 +15,8 @@ import (
 // 0..10 bit masks
 var masks = []int{0, 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023}
 
-// convert a binary of 33 bytes to a phrase of 24 worhs
-func bytesToTwentyFourWords(input []byte) ([]string, error) {
+// convert a binary of 33 bytes to a phrase of 24 words
+func bytesToTwentyFourWords(input []byte, dict []string) ([]string, error) {
 	if 33 != len(input) {
 		return nil, fmt.Errorf("input length: %d expected: 33", len(input))
 	}
@@ -34,8 +34,7 @@ func bytesToTwentyFourWords(input []byte) ([]string, error) {
 			n++
 			index := accumulator >> uint(bits)
 			accumulator &= masks[bits]
-			word := bip39.English[index]
-			phrase = append(phrase, word)
+			phrase = append(phrase, dict[index])
 		}
 	}
 	if 24 != len(phrase) {
