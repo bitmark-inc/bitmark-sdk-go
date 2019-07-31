@@ -5,6 +5,7 @@
 package test
 
 import (
+	"fmt"
 	"github.com/bitmark-inc/bitmark-sdk-go/bitmark"
 	"github.com/stretchr/testify/suite"
 	"testing"
@@ -23,6 +24,7 @@ func NewGiveawayTestSuite(bitmarkCount int) *GiveawayTestSuite {
 
 func (s *GiveawayTestSuite) TestDirectTransfer() {
 	bitmarkID := s.bitmarkIDs[s.bitmarkIndex]
+	fmt.Println(bitmarkID)
 	s.T().Logf("bitmark_id=%s", bitmarkID)
 
 	s.mustDirectTransfer(bitmarkID) // able to transfer right after the bitmark is issued
@@ -34,7 +36,7 @@ func (s *GiveawayTestSuite) TestDirectTransfer() {
 		}
 		time.Sleep(15 * time.Second)
 	}
-	s.verifyBitmark(bitmarkID, s.receiver.AccountNumber(), "transferring", 0)
+	s.verifyBitmark(bitmarkID, s.receiver.AccountNumber(), "transferring", 5*time.Second)
 }
 
 func (s *GiveawayTestSuite) TestCountersignedTransfer() {
