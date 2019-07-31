@@ -5,7 +5,6 @@
 package test
 
 import (
-	"fmt"
 	"github.com/bitmark-inc/bitmark-sdk-go/bitmark"
 	"github.com/stretchr/testify/suite"
 	"testing"
