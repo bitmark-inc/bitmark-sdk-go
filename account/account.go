@@ -284,6 +284,11 @@ func (acct *AccountV1) Seed() string {
 }
 
 func (acct *AccountV1) RecoveryPhrase(lang language.Tag) ([]string, error) {
+	dict, err := getBIP39Dict(lang)
+	if err != nil {
+		return nil, err
+	}
+
 	buf := new(bytes.Buffer)
 	switch acct.Network() {
 	case sdk.Livenet:
@@ -292,7 +297,7 @@ func (acct *AccountV1) RecoveryPhrase(lang language.Tag) ([]string, error) {
 		buf.Write([]byte{01})
 	}
 	buf.Write(acct.seedCore[:])
-	return bytesToTwentyFourWords(buf.Bytes())
+	return bytesToTwentyFourWords(buf.Bytes(), dict)
 }
 
 func (acct *AccountV1) AccountNumber() string {

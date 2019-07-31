@@ -34,7 +34,7 @@ func (s *GiveawayTestSuite) TestDirectTransfer() {
 		}
 		time.Sleep(15 * time.Second)
 	}
-	s.verifyBitmark(bitmarkID, s.receiver.AccountNumber(), "transferring", 0)
+	s.verifyBitmark(bitmarkID, s.receiver.AccountNumber(), "transferring", 5*time.Second)
 }
 
 func (s *GiveawayTestSuite) TestCountersignedTransfer() {
