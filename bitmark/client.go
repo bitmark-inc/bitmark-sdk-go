@@ -91,7 +91,7 @@ func Offer(params *OfferParams) error {
 
 func Respond(params *ResponseParams) (string, error) {
 	if params.auth.Get("signature") == "" {
-		return "", errors.New("response not signed by sender")
+		return "", errors.New("response not signed")
 	}
 
 	client := sdk.GetAPIClient()
