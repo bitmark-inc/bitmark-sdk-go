@@ -272,3 +272,16 @@ func TestRecoverV1Account(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, phrase, strings.Join(recoveredPhrase, " "))
 }
+
+func TestVerify(t *testing.T) {
+	sdk.Init(&sdk.Config{Network: sdk.Testnet})
+
+	acct, err := FromSeed(testnetAccount.seed)
+	assert.NoError(t, err)
+
+	msg := []byte("Hello, world!")
+	sig := acct.Sign(msg)
+
+	err = Verify(acct.AccountNumber(), msg, sig)
+	assert.NoError(t, err)
+}

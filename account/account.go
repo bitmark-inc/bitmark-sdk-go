@@ -9,6 +9,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"golang.org/x/crypto/ed25519"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/bitmark-sdk-go/encoding"
@@ -439,13 +440,31 @@ func (acct AccountV2) Version() Version {
 	return V2
 }
 
-func ValidateAccountNumber(number string) error {
-	accountNumberBytes := encoding.FromBase58(number)
+func ValidateAccountNumber(accountNumber string) (err error) {
+	_, err = extractAuthPublicKey(accountNumber)
+	return
+}
+
+func Verify(accountNumber string, message, signature []byte) error {
+	pubkey, err := extractAuthPublicKey(accountNumber)
+	if err != nil {
+		return err
+	}
+
+	if !ed25519.Verify(pubkey, message, signature) {
+		return errors.New("invalid signature")
+	}
+
+	return nil
+}
+
+func extractAuthPublicKey(accountNumber string) (publicKey []byte, err error) {
+	accountNumberBytes := encoding.FromBase58(accountNumber)
 
 	variantAndPubkey := accountNumberBytes[:len(accountNumberBytes)-ChecksumLength]
 	computedChecksum := sha3.Sum256(variantAndPubkey)
 	if !bytes.Equal(computedChecksum[:ChecksumLength], accountNumberBytes[len(accountNumberBytes)-ChecksumLength:]) {
-		return ErrInvalidChecksum
+		return nil, ErrInvalidChecksum
 	}
 
 	network := sdk.Livenet
@@ -454,8 +473,8 @@ func ValidateAccountNumber(number string) error {
 	}
 
 	if network != sdk.GetNetwork() {
-		return ErrWrongNetwork
+		return nil, ErrWrongNetwork
 	}
 
-	return nil
+	return variantAndPubkey[1:], nil
 }
