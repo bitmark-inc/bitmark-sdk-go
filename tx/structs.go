@@ -5,15 +5,16 @@
 package tx
 
 type Tx struct {
-	ID           string `json:"id"`
-	BitmarkID    string `json:"bitmark_id"`
-	AssetID      string `json:"asset_id"`
-	Owner        string `json:"owner"`
-	Status       string `json:"status"`
-	BlockNumber  int    `json:"block_number"`
-	Sequence     int    `json:"offset"`
-	PreviousID   string `json:"previous_id"`
-	Confirmation uint64 `json:"confirmation"`
-
-	ShareInfo map[string]interface{} `json:"share_info,omitempty"`
+	ID            string                 `json:"id"`
+	Owner         string                 `json:"owner"`
+	PreviousID    string                 `json:"previous_id"`
+	PreviousOwner string                 `json:"previous_owner"`
+	BitmarkID     string                 `json:"bitmark_id"`
+	AssetID       string                 `json:"asset_id"`
+	Countersign   bool                   `json:"countersign"`
+	Status        string                 `json:"status"`
+	BlockNumber   int                    `json:"block_number"`
+	Confirmation  uint64                 `json:"confirmation"`
+	ShareInfo     map[string]interface{} `json:"share_info,omitempty"`
+	Sequence      int                    `json:"offset"`
 }
