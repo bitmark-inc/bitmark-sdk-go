@@ -6,6 +6,7 @@ package asset
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"net/url"
@@ -13,6 +14,7 @@ import (
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/bitmark-sdk-go/utils"
+	"golang.org/x/crypto/sha3"
 )
 
 type registrationRequest struct {
@@ -38,7 +40,9 @@ func Register(params *RegistrationParams) (string, error) {
 		Assets []registeredItem `json:"assets"`
 	}
 	if err := client.Do(req, &result); err != nil {
-		return "", err
+		digest := sha3.Sum512([]byte(params.Fingerprint))
+		assetID := hex.EncodeToString(digest[:])
+		return assetID, err
 	}
 	return result.Assets[0].ID, nil
 }
