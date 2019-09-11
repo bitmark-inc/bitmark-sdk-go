@@ -5,7 +5,6 @@
 package test
 
 import (
-	"github.com/stretchr/testify/suite"
 	"testing"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/bitmark-inc/bitmark-sdk-go/bitmark"
 	"github.com/bitmark-inc/bitmark-sdk-go/tx"
 	"github.com/bitmark-inc/bitmark-sdk-go/utils"
+	"github.com/stretchr/testify/suite"
 )
 
 type QueryTestSuite struct {
@@ -44,7 +44,7 @@ func (q *QueryTestSuite) TestGetAsset() {
 		Registrant:  "eTicVBQqmGzxNMGiZGtKzDdufXZsiFKH3SR8FcVYM7MQTZ47k3",
 		Status:      "confirmed",
 		BlockNumber: 8696,
-		Sequence:    8581,
+		Offset:      8581,
 		CreatedAt:   createdAt,
 	}
 	q.Equal(actual, expected)
@@ -65,7 +65,7 @@ func (q *QueryTestSuite) TestListAssetByAtAndTo() {
 	q.NoError(err)
 	q.True(len(assets) <= limit)
 	for _, a := range assets {
-		q.True(a.Sequence <= at)
+		q.True(a.Offset <= at)
 	}
 }
 
@@ -147,7 +147,7 @@ func (q *QueryTestSuite) TestListBitmarkByAtAndTo() {
 	q.NoError(err)
 
 	for _, b := range bitmarks {
-		q.True(b.Commit <= at)
+		q.True(b.Offset <= at)
 	}
 }
 
@@ -206,7 +206,7 @@ func (q *QueryTestSuite) TestListTxsByAtAndTo() {
 	q.NoError(err)
 
 	for _, tx := range txs {
-		q.True(tx.Sequence <= at)
+		q.True(tx.Offset <= at)
 	}
 }
 

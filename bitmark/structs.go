@@ -12,15 +12,15 @@ import (
 type Bitmark struct {
 	ID          string         `json:"id"`
 	AssetID     string         `json:"asset_id"`
-	LatestTxID  string         `json:"head_id"` // TODO: rename api field
+	LatestTxID  string         `json:"head_id"`
 	Issuer      string         `json:"issuer"`
 	Owner       string         `json:"owner"`
-	Status      string         `json:"status"` // issuing, transferring, offering, settled
+	Status      string         `json:"status"`
 	Offer       *TransferOffer `json:"offer"`
 	BlockNumber int            `json:"block_number"`
-	Commit      int            `json:"offset"` // TODO: rename api field
+	Offset      int            `json:"offset"`
 	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"confirmed_at"` // TODO: rename api field
+	ConfirmedAt time.Time      `json:"confirmed_at"`
 }
 
 type TransferOffer struct {
@@ -30,7 +30,6 @@ type TransferOffer struct {
 	Record    *CountersignedTransferRequest `json:"record"`
 	ExtraInfo map[string]string             `json:"extra_info"`
 	CreatedAt time.Time                     `json:"created_at"`
-	Open      bool                          `json:"open"`
 }
 
 type Share struct {

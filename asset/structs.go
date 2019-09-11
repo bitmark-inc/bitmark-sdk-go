@@ -14,6 +14,6 @@ type Asset struct {
 	Registrant  string            `json:"registrant"`
 	Status      string            `json:"status"`
 	BlockNumber int               `json:"block_number"`
-	Sequence    int               `json:"offset"`
+	Offset      int               `json:"offset"`
 	CreatedAt   time.Time         `json:"created_at"`
 }

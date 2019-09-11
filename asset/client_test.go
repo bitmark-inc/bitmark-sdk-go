@@ -86,7 +86,7 @@ func TestGetAsset(t *testing.T) {
 		Registrant:  "eabJKs8sDYT6FJGGUoA882T2Es1k8rho4cRiMPcjTuEURsC1Su",
 		Status:      "confirmed",
 		BlockNumber: 26830,
-		Sequence:    450434,
+		Offset:      450434,
 		CreatedAt:   time.Date(2019, 07, 15, 8, 44, 45, 0, time.UTC),
 	})
 	assert.NoError(t, err)

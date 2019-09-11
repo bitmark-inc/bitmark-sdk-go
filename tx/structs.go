@@ -16,5 +16,5 @@ type Tx struct {
 	BlockNumber   int                    `json:"block_number"`
 	Confirmation  uint64                 `json:"confirmation"`
 	ShareInfo     map[string]interface{} `json:"share_info,omitempty"`
-	Sequence      int                    `json:"offset"`
+	Offset        int                    `json:"offset"`
 }
