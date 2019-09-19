@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"runtime"
 	"strings"
@@ -115,7 +116,11 @@ func (s *BackendImplementation) Do(req *http.Request, v interface{}) error {
 	if resp.StatusCode >= 400 {
 		var aerr APIError
 		if err := json.NewDecoder(resp.Body).Decode(&aerr); err != nil {
-			return errors.New("unexpected api response")
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return errors.New("unable to read response")
+			}
+			return errors.New(string(body))
 		}
 
 		return &aerr
