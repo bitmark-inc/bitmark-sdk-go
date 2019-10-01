@@ -18,6 +18,7 @@ type Bitmark struct {
 	Status      string         `json:"status"`
 	Offer       *TransferOffer `json:"offer"`
 	BlockNumber int            `json:"block_number"`
+	Edition     int            `json:"edition"`
 	Offset      int            `json:"offset"`
 	CreatedAt   time.Time      `json:"created_at"`
 	ConfirmedAt time.Time      `json:"confirmed_at"`
