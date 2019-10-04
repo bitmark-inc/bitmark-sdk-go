@@ -45,7 +45,7 @@ func (q *QueryTestSuite) TestGetAsset() {
 		Status:      "confirmed",
 		BlockNumber: 8696,
 		Offset:      8581,
-		CreatedAt:   createdAt,
+		CreatedAt:   &createdAt,
 	}
 	q.Equal(actual, expected)
 }
