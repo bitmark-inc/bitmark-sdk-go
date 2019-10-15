@@ -460,6 +460,9 @@ func Verify(accountNumber string, message, signature []byte) error {
 
 func extractAuthPublicKey(accountNumber string) (publicKey []byte, err error) {
 	accountNumberBytes := encoding.FromBase58(accountNumber)
+	if len(accountNumberBytes) == 0 {
+		return nil, errors.New("invalid base58 string")
+	}
 
 	variantAndPubkey := accountNumberBytes[:len(accountNumberBytes)-ChecksumLength]
 	computedChecksum := sha3.Sum256(variantAndPubkey)

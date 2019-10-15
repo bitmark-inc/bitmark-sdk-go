@@ -258,6 +258,9 @@ func TestValidateAccountNumber(t *testing.T) {
 
 	err = ValidateAccountNumber(livenetDeprecatedAccount.accountNumber)
 	assert.NoError(t, err)
+
+	err = ValidateAccountNumber("IOl")
+	assert.Error(t, err, "invalid base58 string")
 }
 
 func TestRecoverV1Account(t *testing.T) {
