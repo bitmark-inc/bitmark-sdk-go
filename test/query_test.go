@@ -19,13 +19,8 @@ type QueryTestSuite struct {
 	BaseTestSuite
 }
 
-func NewQueryTestSuite() *QueryTestSuite {
-	s := new(QueryTestSuite)
-	s.bitmarkCount = 0
-	return s
-}
 func TestQueryTestSuite(t *testing.T) {
-	suite.Run(t, NewQueryTestSuite())
+	suite.Run(t, new(QueryTestSuite))
 }
 
 func (q *QueryTestSuite) TestGetAsset() {

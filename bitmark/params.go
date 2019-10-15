@@ -6,6 +6,7 @@ package bitmark
 
 import (
 	"encoding/hex"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -40,7 +41,11 @@ type IssueRequest struct {
 	Signature string `json:"signature"`
 }
 
-func NewIssuanceParams(assetID string, quantity int) *IssuanceParams {
+func NewIssuanceParams(assetID string, quantity int) (*IssuanceParams, error) {
+	if quantity < 1 {
+		return nil, errors.New("quantity must be greater than or equal to 1")
+	}
+
 	ip := &IssuanceParams{
 		Issuances: make([]*IssueRequest, 0),
 	}
@@ -67,7 +72,7 @@ func NewIssuanceParams(assetID string, quantity int) *IssuanceParams {
 		ip.Issuances = append(ip.Issuances, issuance)
 	}
 
-	return ip
+	return ip, nil
 }
 
 // Sign all issunaces in a batch

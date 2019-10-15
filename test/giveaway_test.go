@@ -5,10 +5,13 @@
 package test
 
 import (
-	"github.com/bitmark-inc/bitmark-sdk-go/bitmark"
-	"github.com/stretchr/testify/suite"
+	"os"
 	"testing"
 	"time"
+
+	"github.com/bitmark-inc/bitmark-sdk-go/account"
+	"github.com/bitmark-inc/bitmark-sdk-go/bitmark"
+	"github.com/stretchr/testify/suite"
 )
 
 type GiveawayTestSuite struct {
@@ -19,6 +22,23 @@ func NewGiveawayTestSuite(bitmarkCount int) *GiveawayTestSuite {
 	s := new(GiveawayTestSuite)
 	s.bitmarkCount = bitmarkCount
 	return s
+}
+
+func (s *GiveawayTestSuite) SetupSuite() {
+	s.BaseTestSuite.SetupSuite()
+
+	var err error
+	s.sender, err = account.FromSeed(os.Getenv("SENDER_SEED"))
+	if err != nil {
+		s.Fail(err.Error())
+	}
+	s.receiver, err = account.FromSeed(os.Getenv("RECEIVER_SEED"))
+	if err != nil {
+		s.Fail(err.Error())
+	}
+
+	assetID := s.mustRegisterAsset("", []byte(time.Now().String()))
+	s.bitmarkIDs = s.mustIssueBitmarks(assetID, s.bitmarkCount)
 }
 
 func (s *GiveawayTestSuite) TestDirectTransfer() {

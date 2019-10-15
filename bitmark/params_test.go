@@ -11,6 +11,7 @@ import (
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/bitmark-sdk-go/account"
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -61,6 +62,14 @@ func init() {
 // 		t.Fatalf("incorrect offer params: actual = %+v, expected = %+v", actual, expected)
 // 	}
 // }
+
+func TestInvalidQuantity(t *testing.T) {
+	_, err := NewIssuanceParams("03023b0a5fbf78f40eb97027e782ee7fbc2098fa54cb5abf5d5c97c6e7ffa4ceebd067e5b16648179771ec749f4fa3dde7085f441d41f0ba22bbc833a5b21c7e", -1)
+	assert.EqualError(t, err, "quantity must be greater than or equal to 1")
+
+	_, err = NewIssuanceParams("03023b0a5fbf78f40eb97027e782ee7fbc2098fa54cb5abf5d5c97c6e7ffa4ceebd067e5b16648179771ec749f4fa3dde7085f441d41f0ba22bbc833a5b21c7e", 0)
+	assert.EqualError(t, err, "quantity must be greater than or equal to 1")
+}
 
 func TestTransferParams(t *testing.T) {
 	params, _ := NewTransferParams(receiver.AccountNumber())

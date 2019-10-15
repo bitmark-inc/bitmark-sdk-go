@@ -10,7 +10,7 @@ import (
 )
 
 func issueBitmarks(issuer account.Account, assetID string, quantity int) ([]string, error) {
-	issuanceParams := bitmark.NewIssuanceParams(assetID, quantity)
+	issuanceParams, _ := bitmark.NewIssuanceParams(assetID, quantity)
 	issuanceParams.Sign(issuer)
 
 	bitmarkIDs, err := bitmark.Issue(issuanceParams)

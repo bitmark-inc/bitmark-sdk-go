@@ -34,19 +34,6 @@ func (s *BaseTestSuite) SetupSuite() {
 		Network:    sdk.Network(network),
 		APIToken:   token,
 	})
-
-	var err error
-	s.sender, err = account.FromSeed(os.Getenv("SENDER_SEED"))
-	if err != nil {
-		s.Fail(err.Error())
-	}
-	s.receiver, err = account.FromSeed(os.Getenv("RECEIVER_SEED"))
-	if err != nil {
-		s.Fail(err.Error())
-	}
-
-	assetID := s.mustRegisterAsset("", []byte(time.Now().String()))
-	s.bitmarkIDs = s.mustIssueBitmarks(assetID, s.bitmarkCount)
 }
 
 func (s *BaseTestSuite) TearDownTest() {
@@ -66,7 +53,10 @@ func (s *BaseTestSuite) mustRegisterAsset(name string, content []byte) string {
 }
 
 func (s *BaseTestSuite) mustIssueBitmarks(assetID string, quantity int) []string {
-	params := bitmark.NewIssuanceParams(assetID, quantity)
+	params, err := bitmark.NewIssuanceParams(assetID, quantity)
+	if !s.NoError(err) {
+		s.T().FailNow()
+	}
 	params.Sign(s.sender)
 	bitmarkIDs, err := bitmark.Issue(params)
 	if !s.NoError(err) {

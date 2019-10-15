@@ -5,10 +5,14 @@
 package test
 
 import (
-	"github.com/bitmark-inc/bitmark-sdk-go/bitmark"
-	"github.com/stretchr/testify/suite"
+	"os"
 	"testing"
 	"time"
+
+	"github.com/bitmark-inc/bitmark-sdk-go/account"
+	"github.com/bitmark-inc/bitmark-sdk-go/asset"
+	"github.com/bitmark-inc/bitmark-sdk-go/bitmark"
+	"github.com/stretchr/testify/suite"
 )
 
 type OwnershipTestSuite struct {
@@ -23,6 +27,19 @@ func NewOwnershipTestSuite(bitmarkCount int) *OwnershipTestSuite {
 
 func (s *OwnershipTestSuite) SetupSuite() {
 	s.BaseTestSuite.SetupSuite()
+
+	var err error
+	s.sender, err = account.FromSeed(os.Getenv("SENDER_SEED"))
+	if err != nil {
+		s.Fail(err.Error())
+	}
+	s.receiver, err = account.FromSeed(os.Getenv("RECEIVER_SEED"))
+	if err != nil {
+		s.Fail(err.Error())
+	}
+
+	assetID := s.mustRegisterAsset("", []byte(time.Now().String()))
+	s.bitmarkIDs = s.mustIssueBitmarks(assetID, s.bitmarkCount)
 
 	for {
 		if txsAreReady(s.bitmarkIDs) {
@@ -113,6 +130,22 @@ func (s *OwnershipTestSuite) TestCreateAndAcceptCountersignedTransfer() {
 	s.NoError(err)
 
 	s.verifyBitmark(bitmarkID, s.receiver.AccountNumber(), "transferring", 10*time.Second)
+}
+
+func (s *OwnershipTestSuite) TestRegisterDuplicateAsset() {
+	params, _ := asset.NewRegistrationParams("another name", nil)
+	params.SetFingerprintFromData([]byte("Fri May 10 14:01:41 CST 2019"))
+	params.Sign(s.sender)
+	_, err := asset.Register(params)
+	s.Error(err)
+}
+
+func (s *OwnershipTestSuite) TestIssueForNotExistingAsset() {
+	notExistingAssetID := "11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+	params, _ := bitmark.NewIssuanceParams(notExistingAssetID, 1)
+	params.Sign(s.sender)
+	_, err := bitmark.Issue(params)
+	s.Error(err)
 }
 
 func TestOwnershipTestSuite(t *testing.T) {
