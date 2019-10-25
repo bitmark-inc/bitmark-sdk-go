@@ -9,10 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/suite"
+
 	"github.com/bitmark-inc/bitmark-sdk-go/account"
 	"github.com/bitmark-inc/bitmark-sdk-go/asset"
 	"github.com/bitmark-inc/bitmark-sdk-go/bitmark"
-	"github.com/stretchr/testify/suite"
 )
 
 type OwnershipTestSuite struct {
@@ -42,7 +43,7 @@ func (s *OwnershipTestSuite) SetupSuite() {
 	s.bitmarkIDs = s.mustIssueBitmarks(assetID, s.bitmarkCount)
 
 	for {
-		if txsAreReady(s.bitmarkIDs) {
+		if s.txsAreReady(s.bitmarkIDs) {
 			break
 		}
 		time.Sleep(15 * time.Second)
@@ -54,7 +55,7 @@ func (s *OwnershipTestSuite) TestDirectTransfer() {
 	s.T().Logf("bitmark_id=%s", bitmarkID)
 
 	s.mustDirectTransfer(bitmarkID)
-	s.verifyBitmark(bitmarkID, s.receiver.AccountNumber(), "transferring", 10*time.Second)
+	s.verifyBitmark(bitmarkID, s.receiver.AccountNumber(), "transferring")
 }
 
 func (s *OwnershipTestSuite) TestCreateAndCancelCountersignedTransfer() {
@@ -63,7 +64,7 @@ func (s *OwnershipTestSuite) TestCreateAndCancelCountersignedTransfer() {
 
 	s.mustCreateOffer(bitmarkID)
 
-	bmk := s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "offering", 0)
+	bmk := s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "offering")
 
 	// cancelled not by sender
 	params := bitmark.NewTransferResponseParams(bmk, "cancel")
@@ -71,7 +72,7 @@ func (s *OwnershipTestSuite) TestCreateAndCancelCountersignedTransfer() {
 	_, err := bitmark.Respond(params)
 	s.EqualError(err, "[2014] message: not transfer offer sender reason: not authorized requester")
 
-	bmk = s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "offering", 0)
+	bmk = s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "offering")
 
 	// cancelled by sender
 	params = bitmark.NewTransferResponseParams(bmk, "cancel")
@@ -79,7 +80,7 @@ func (s *OwnershipTestSuite) TestCreateAndCancelCountersignedTransfer() {
 	_, err = bitmark.Respond(params)
 	s.NoError(err)
 
-	s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "settled", 0)
+	s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "settled")
 }
 
 func (s *OwnershipTestSuite) TestCreateAndRejectCountersignedTransfer() {
@@ -88,7 +89,7 @@ func (s *OwnershipTestSuite) TestCreateAndRejectCountersignedTransfer() {
 
 	s.mustCreateOffer(bitmarkID)
 
-	bmk := s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "offering", 0)
+	bmk := s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "offering")
 
 	// rejected not by receiver
 	params := bitmark.NewTransferResponseParams(bmk, "reject")
@@ -96,7 +97,7 @@ func (s *OwnershipTestSuite) TestCreateAndRejectCountersignedTransfer() {
 	_, err := bitmark.Respond(params)
 	s.EqualError(err, "[2015] message: not transfer offer receiver reason: not authorized requester")
 
-	bmk = s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "offering", 0)
+	bmk = s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "offering")
 
 	// rejected by receiver
 	params = bitmark.NewTransferResponseParams(bmk, "reject")
@@ -104,7 +105,7 @@ func (s *OwnershipTestSuite) TestCreateAndRejectCountersignedTransfer() {
 	_, err = bitmark.Respond(params)
 	s.NoError(err)
 
-	s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "settled", 0)
+	s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "settled")
 }
 
 func (s *OwnershipTestSuite) TestCreateAndAcceptCountersignedTransfer() {
@@ -113,15 +114,15 @@ func (s *OwnershipTestSuite) TestCreateAndAcceptCountersignedTransfer() {
 
 	s.mustCreateOffer(bitmarkID)
 
-	bmk := s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "offering", 0)
+	bmk := s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "offering")
 
 	// accepted not by receiver
 	params := bitmark.NewTransferResponseParams(bmk, "accept")
 	params.Sign(s.sender)
 	_, err := bitmark.Respond(params)
-	s.EqualError(err, "[2015] message: not transfer offer receiver reason: invalid transfer offer request because of error: only the receiptant can accept a transfer offer")
+	s.EqualError(err, "[2015] message: not transfer offer receiver reason: invalid transfer offer request because of error: only the recipient can accept a transfer offer")
 
-	bmk = s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "offering", 0)
+	bmk = s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "offering")
 
 	// accepted by receiver
 	params = bitmark.NewTransferResponseParams(bmk, "accept")
@@ -129,7 +130,7 @@ func (s *OwnershipTestSuite) TestCreateAndAcceptCountersignedTransfer() {
 	_, err = bitmark.Respond(params)
 	s.NoError(err)
 
-	s.verifyBitmark(bitmarkID, s.receiver.AccountNumber(), "transferring", 10*time.Second)
+	s.verifyBitmark(bitmarkID, s.receiver.AccountNumber(), "transferring")
 }
 
 func (s *OwnershipTestSuite) TestRegisterDuplicateAsset() {

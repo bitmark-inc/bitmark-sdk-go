@@ -9,9 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/suite"
+
 	"github.com/bitmark-inc/bitmark-sdk-go/account"
 	"github.com/bitmark-inc/bitmark-sdk-go/bitmark"
-	"github.com/stretchr/testify/suite"
 )
 
 type GiveawayTestSuite struct {
@@ -46,15 +47,7 @@ func (s *GiveawayTestSuite) TestDirectTransfer() {
 	s.T().Logf("bitmark_id=%s", bitmarkID)
 
 	s.mustDirectTransfer(bitmarkID) // able to transfer right after the bitmark is issued
-	s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "issuing", 5*time.Second)
-
-	for {
-		if txsAreReady([]string{bitmarkID}) {
-			break
-		}
-		time.Sleep(15 * time.Second)
-	}
-	s.verifyBitmark(bitmarkID, s.receiver.AccountNumber(), "transferring", 5*time.Second)
+	s.verifyBitmark(bitmarkID, s.receiver.AccountNumber(), "transferring")
 }
 
 func (s *GiveawayTestSuite) TestCountersignedTransfer() {
@@ -62,22 +55,22 @@ func (s *GiveawayTestSuite) TestCountersignedTransfer() {
 	s.T().Logf("bitmark_id=%s", bitmarkID)
 
 	s.mustCreateOffer(bitmarkID) // able to create a transfer offer right after the bitmark is issued
-	s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "issuing", 5*time.Second)
+	s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "issuing")
 
 	for {
-		if txsAreReady([]string{bitmarkID}) {
+		if s.txsAreReady([]string{bitmarkID}) {
 			break
 		}
 		time.Sleep(15 * time.Second)
 	}
-	bmk := s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "offering", 0)
+	bmk := s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "offering")
 
 	params := bitmark.NewTransferResponseParams(bmk, "accept")
 	params.Sign(s.receiver)
 	_, err := bitmark.Respond(params)
 	s.NoError(err)
 
-	s.verifyBitmark(bitmarkID, s.receiver.AccountNumber(), "transferring", 5*time.Second)
+	s.verifyBitmark(bitmarkID, s.receiver.AccountNumber(), "transferring")
 }
 
 func TestGiveawayTestSuite(t *testing.T) {

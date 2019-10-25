@@ -5,14 +5,16 @@
 package test
 
 import (
+	"net/http"
+	"os"
+
+	"github.com/stretchr/testify/suite"
+
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/bitmark-sdk-go/account"
 	"github.com/bitmark-inc/bitmark-sdk-go/asset"
 	"github.com/bitmark-inc/bitmark-sdk-go/bitmark"
-	"github.com/stretchr/testify/suite"
-	"net/http"
-	"os"
-	"time"
+	"github.com/bitmark-inc/bitmark-sdk-go/tx"
 )
 
 type BaseTestSuite struct {
@@ -91,13 +93,21 @@ func (s *BaseTestSuite) mustCreateOffer(bitmarkID string) {
 	}
 }
 
-func (s *BaseTestSuite) verifyBitmark(bitmarkID, owner, status string, delay time.Duration) *bitmark.Bitmark {
-	time.Sleep(delay)
-
+func (s *BaseTestSuite) verifyBitmark(bitmarkID, owner, status string) *bitmark.Bitmark {
 	bmk, err := bitmark.Get(bitmarkID)
 	if !s.NoError(err) || !s.Equal(owner, bmk.Owner) || !s.Equal(status, bmk.Status) {
 		s.T().Logf("bitmark: %+v", bmk)
 		s.T().FailNow()
 	}
 	return bmk
+}
+
+func (s *BaseTestSuite) txsAreReady(txIDs []string) bool {
+	for _, txID := range txIDs {
+		tx, _ := tx.Get(txID)
+		if tx != nil && tx.Status != "confirmed" {
+			return false
+		}
+	}
+	return true
 }
