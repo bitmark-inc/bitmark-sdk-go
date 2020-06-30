@@ -6,14 +6,15 @@ package asset
 
 import (
 	"fmt"
-	sdk "github.com/bitmark-inc/bitmark-sdk-go"
-	"github.com/bitmark-inc/bitmark-sdk-go/utils"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	sdk "github.com/bitmark-inc/bitmark-sdk-go"
+	"github.com/bitmark-inc/bitmark-sdk-go/utils"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRegisterAsset(t *testing.T) {
@@ -78,6 +79,7 @@ func TestGetAsset(t *testing.T) {
 	sdk.GetAPIClient().URLAuthority = ts.URL
 
 	asset, err := Get("asset_id")
+	createdAt := time.Date(2019, 07, 15, 8, 44, 45, 0, time.UTC)
 	assert.Equal(t, asset, &Asset{
 		ID:          "be8af6c36ad4e4e15129fbbf6c2a6e75ac984a868cd9e76e75e8f60c5973b7722073dad1dbe4c70f6e65f4fbe42b100b1239ae48449cb75ec9367da47ce8d4a7",
 		Name:        "Logo 1",
@@ -87,7 +89,7 @@ func TestGetAsset(t *testing.T) {
 		Status:      "confirmed",
 		BlockNumber: 26830,
 		Offset:      450434,
-		CreatedAt:   time.Date(2019, 07, 15, 8, 44, 45, 0, time.UTC),
+		CreatedAt:   &createdAt,
 	})
 	assert.NoError(t, err)
 }
