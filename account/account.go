@@ -9,14 +9,15 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+
 	"golang.org/x/crypto/ed25519"
+	"golang.org/x/crypto/nacl/secretbox"
+	"golang.org/x/crypto/sha3"
+	"golang.org/x/text/language"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/bitmark-sdk-go/encoding"
 	"github.com/bitmark-inc/bitmarkd/util"
-	"golang.org/x/crypto/nacl/secretbox"
-	"golang.org/x/crypto/sha3"
-	"golang.org/x/text/language"
 )
 
 type Version string
@@ -47,8 +48,9 @@ const (
 	base58EncodedSeedV1Length     = 40
 	base58EncodedseedCoreV2Length = 24
 
-	recoveryPhraseV1Length = 24
-	recoveryPhraseV2Length = 12
+	recoveryPhraseV1Length   = 24
+	recoveryPhraseV2Length   = 12
+	recoveryPhraseV2CsLength = 13
 )
 
 var (
@@ -212,7 +214,30 @@ func FromRecoveryPhrase(words []string, lang language.Tag) (Account, error) {
 
 		return NewAccountV1(core)
 	case recoveryPhraseV2Length:
-		core, err := twelveWordsToByteswords(words, dict)
+		core, err := twelveWordsToBytes(words, dict)
+		if err != nil {
+			return nil, err
+		}
+
+		// parse network
+		var network sdk.Network
+		mode := core[0]&0x80 | core[1]&0x40 | core[2]&0x20 | core[3]&0x10
+		switch mode {
+		case core[15] & 0xF0:
+			network = sdk.Livenet
+		case core[15]&0xF0 ^ 0xF0:
+			network = sdk.Testnet
+		default:
+			return nil, ErrInvalidSeed
+		}
+
+		if network != sdk.GetNetwork() {
+			return nil, ErrWrongNetwork
+		}
+
+		return NewAccountV2(core)
+	case recoveryPhraseV2CsLength:
+		core, err := thirteenWordsToBytes(words, dict)
 		if err != nil {
 			return nil, err
 		}
@@ -414,7 +439,7 @@ func (acct *AccountV2) RecoveryPhrase(lang language.Tag) ([]string, error) {
 		return nil, err
 	}
 
-	return bytesToTwelveWords(acct.seedCore, dict)
+	return bytesToThirteenWords(acct.seedCore, dict)
 }
 
 func (acct *AccountV2) AccountNumber() string {

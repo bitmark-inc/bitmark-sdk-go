@@ -5,12 +5,13 @@
 package account
 
 import (
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
 
-	sdk "github.com/bitmark-inc/bitmark-sdk-go"
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/text/language"
+
+	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 )
 
 type valid struct {
@@ -22,26 +23,50 @@ type valid struct {
 }
 
 var (
-	testnetAccount = valid{
-		"9J87CAsHdFdoEu6N1unZk3sqhVBkVL8Z8",
-		[]string{
-			"name gaze apart lamp lift zone believe steak session laptop crowd hill",
-			"箱 阻 起 歸 徹 矮 問 栽 瓜 鼓 支 樂",
+	testnetAccounts = []valid{
+		// {
+		// 	"9J87CAsHdFdoEu6N1unZk3sqhVBkVL8Z8",
+		// 	[]string{
+		// 		"name gaze apart lamp lift zone believe steak session laptop crowd hill",
+		// 		"箱 阻 起 歸 徹 矮 問 栽 瓜 鼓 支 樂",
+		// 	},
+		// 	"eMCcmw1SKoohNUf3LeioTFKaYNYfp2bzFYpjm3EddwxBSWYVCb",
+		// 	sdk.Testnet,
+		// 	V2,
+		// },
+		{
+			"9J87CAsHdFdoEu6N1unZk3sqhVBkVL8Z8",
+			[]string{
+				"name gaze apart lamp lift zone believe steak session laptop crowd hill argue",
+				"箱 阻 起 歸 徹 矮 問 栽 瓜 鼓 支 樂 制",
+			},
+			"eMCcmw1SKoohNUf3LeioTFKaYNYfp2bzFYpjm3EddwxBSWYVCb",
+			sdk.Testnet,
+			V2,
 		},
-		"eMCcmw1SKoohNUf3LeioTFKaYNYfp2bzFYpjm3EddwxBSWYVCb",
-		sdk.Testnet,
-		V2,
 	}
 
-	livenetAccount = valid{
-		"9J87GaPq7FR9Uacdi3FUoWpP6LbEpo1Ax",
-		[]string{
-			"surprise mesh walk inject height join sound minor margin over jewel venue",
-			"薯 托 劍 景 擔 額 牢 痛 亦 軟 凱 誼",
+	livenetAccounts = []valid{
+		// {
+		// 	"9J87GaPq7FR9Uacdi3FUoWpP6LbEpo1Ax",
+		// 	[]string{
+		// 		"surprise mesh walk inject height join sound minor margin over jewel venue",
+		// 		"薯 托 劍 景 擔 額 牢 痛 亦 軟 凱 誼",
+		// 	},
+		// 	"aiKFA9dKkNHPys3nSZrLTPusoocPqXSFp5EexsgQ1hbYUrJVne",
+		// 	sdk.Livenet,
+		// 	V2,
+		// },
+		{
+			"9J87GaPq7FR9Uacdi3FUoWpP6LbEpo1Ax",
+			[]string{
+				"surprise mesh walk inject height join sound minor margin over jewel venue animal",
+				"薯 托 劍 景 擔 額 牢 痛 亦 軟 凱 誼 電",
+			},
+			"aiKFA9dKkNHPys3nSZrLTPusoocPqXSFp5EexsgQ1hbYUrJVne",
+			sdk.Livenet,
+			V2,
 		},
-		"aiKFA9dKkNHPys3nSZrLTPusoocPqXSFp5EexsgQ1hbYUrJVne",
-		sdk.Livenet,
-		V2,
 	}
 
 	testnetDeprecatedAccount = valid{
@@ -69,105 +94,112 @@ var (
 
 func check(t *testing.T, a Account, data valid) {
 	if a.Seed() != data.seed {
-		t.Fatalf("invalid seed: expected = %s, actual = %s", testnetAccount.seed, a.Seed())
+		t.Fatalf("invalid seed:\n expected: %s\n actual:   %s", a.Seed(), a.Seed())
 	}
 
 	for i, p := range data.phrases {
 		phrase, _ := a.RecoveryPhrase(langCheckSequence[i])
-		if strings.Join(phrase, " ") != data.phrases[i] {
-			t.Fatalf("invalid recovery phrase: expected = %s, actual = %s", p, phrase)
+		actualP := strings.Join(phrase, " ")
+		if actualP != data.phrases[i] {
+			t.Fatalf("invalid recovery phrase:\n expected: %s\n actual:   %s", p, actualP)
 		}
 	}
 
 	if a.AccountNumber() != data.accountNumber {
-		t.Fatalf("invalid account number: expected = %s, actual = %s", data.accountNumber, a.AccountNumber())
+		t.Fatalf("invalid account number:\n expected: %s\n actual:   %s", data.accountNumber, a.AccountNumber())
 	}
 
 	if a.Network() != data.network {
-		t.Fatalf("invalid network: expected = %s, actual = %s", data.network, a.Network())
+		t.Fatalf("invalid network:\n expected: %s\n actual:   %s", data.network, a.Network())
 	}
 
 	if a.Version() != data.version {
-		t.Fatalf("invalid version: expected = %s, actual = %s", data.version, a.Version())
+		t.Fatalf("invalid version:\n expected: %s\n actual:   %s", data.version, a.Version())
 	}
 }
 
 func TestTestnetAccount(t *testing.T) {
 	sdk.Init(&sdk.Config{Network: sdk.Testnet})
 
-	acctFromSeed, err := FromSeed(testnetAccount.seed)
-	if err != nil {
-		t.Fatalf("failed to recover from seed: %s", err)
-	}
-	check(t, acctFromSeed, testnetAccount)
-
-	for i, lang := range langCheckSequence {
-		phrase := strings.Split(testnetAccount.phrases[i], " ")
-		acctFromPhrase, err := FromRecoveryPhrase(phrase, lang)
+	for n, acc := range testnetAccounts {
+		acctFromSeed, err := FromSeed(acc.seed)
 		if err != nil {
-			t.Fatalf("failed to recover from phrase: %s", err)
+			t.Fatalf("[%d] failed to recover from seed, error: %s", n, err)
 		}
-		check(t, acctFromPhrase, testnetAccount)
+		check(t, acctFromSeed, acc)
+
+		for i, lang := range langCheckSequence {
+			phrase := strings.Split(acc.phrases[i], " ")
+			acctFromPhrase, err := FromRecoveryPhrase(phrase, lang)
+			if err != nil {
+				t.Fatalf("[%d,%d] failed to recover from phrase, error: %s", n, i, err)
+			}
+			check(t, acctFromPhrase, acc)
+		}
 	}
 }
 
 func TestLivenetAccount(t *testing.T) {
 	sdk.Init(&sdk.Config{Network: sdk.Livenet})
 
-	acctFromSeed, err := FromSeed(livenetAccount.seed)
-	if err != nil {
-		t.Fatalf("failed to recover from seed: %s", err)
-	}
-	check(t, acctFromSeed, livenetAccount)
-
-	for i, lang := range langCheckSequence {
-		phrase := strings.Split(livenetAccount.phrases[i], " ")
-		acctFromPhrase, err := FromRecoveryPhrase(phrase, lang)
+	for n, acc := range livenetAccounts {
+		acctFromSeed, err := FromSeed(acc.seed)
 		if err != nil {
-			t.Fatalf("failed to recover from phrase: %s", err)
+			t.Fatalf("[%d] failed to recover from seed: %s", n, err)
 		}
-		check(t, acctFromPhrase, livenetAccount)
+		check(t, acctFromSeed, acc)
+
+		for i, lang := range langCheckSequence {
+			phrase := strings.Split(acc.phrases[i], " ")
+			acctFromPhrase, err := FromRecoveryPhrase(phrase, lang)
+			if err != nil {
+				t.Fatalf("[%d,%d] failed to recover from phrase: %s", n, i, err)
+			}
+			check(t, acctFromPhrase, acc)
+		}
 	}
 }
 
 func TestRejectAccountFromWrongNetwork(t *testing.T) {
 	sdk.Init(&sdk.Config{Network: sdk.Livenet})
 
-	if _, err := FromSeed(testnetAccount.seed); err == nil {
-		t.Fatal("seed from testnet not rejected")
-	}
-
-	for i, lang := range langCheckSequence {
-		phrase := strings.Split(testnetAccount.phrases[i], " ")
-		if _, err := FromRecoveryPhrase(phrase, lang); err == nil {
+	for _, acc := range testnetAccounts {
+		if _, err := FromSeed(acc.seed); err == nil {
 			t.Fatal("seed from testnet not rejected")
 		}
-	}
 
+		for i, lang := range langCheckSequence {
+			phrase := strings.Split(acc.phrases[i], " ")
+			if _, err := FromRecoveryPhrase(phrase, lang); err == nil {
+				t.Fatal("seed from testnet not rejected")
+			}
+		}
+	}
 	if _, err := FromSeed(testnetDeprecatedAccount.seed); err == nil {
 		t.Fatal("seed from testnet not rejected")
 	}
 
 	for i, lang := range langCheckSequence {
-		if i >= len(testnetDeprecatedAccount.phrases) {
-			break
-		}
-		phrase := strings.Split(testnetDeprecatedAccount.phrases[i], " ")
-		if _, err := FromRecoveryPhrase(phrase, lang); err == nil {
-			t.Fatal("seed from testnet not rejected")
+		if i < len(testnetDeprecatedAccount.phrases) {
+			phrase := strings.Split(testnetDeprecatedAccount.phrases[i], " ")
+			if _, err := FromRecoveryPhrase(phrase, lang); err == nil {
+				t.Fatal("seed from testnet not rejected")
+			}
 		}
 	}
 
 	sdk.Init(&sdk.Config{Network: sdk.Testnet})
 
-	if _, err := FromSeed(livenetAccount.seed); err == nil {
-		t.Fatal("seed from livenet not rejected")
-	}
-
-	for i, lang := range langCheckSequence {
-		phrase := strings.Split(livenetAccount.phrases[i], " ")
-		if _, err := FromRecoveryPhrase(phrase, lang); err == nil {
+	for _, acc := range livenetAccounts {
+		if _, err := FromSeed(acc.seed); err == nil {
 			t.Fatal("seed from livenet not rejected")
+		}
+
+		for i, lang := range langCheckSequence {
+			phrase := strings.Split(acc.phrases[i], " ")
+			if _, err := FromRecoveryPhrase(phrase, lang); err == nil {
+				t.Fatal("seed from livenet not rejected")
+			}
 		}
 	}
 
@@ -176,12 +208,12 @@ func TestRejectAccountFromWrongNetwork(t *testing.T) {
 	}
 
 	for i, lang := range langCheckSequence {
-		if i >= len(testnetDeprecatedAccount.phrases) {
-			break
-		}
-		phrase := strings.Split(livenetDeprecatedAccount.phrases[i], " ")
-		if _, err := FromRecoveryPhrase(phrase, lang); err == nil {
-			t.Fatal("seed from livenet not rejected")
+		if i < len(testnetDeprecatedAccount.phrases) {
+
+			phrase := strings.Split(livenetDeprecatedAccount.phrases[i], " ")
+			if _, err := FromRecoveryPhrase(phrase, lang); err == nil {
+				t.Fatal("seed from livenet not rejected")
+			}
 		}
 	}
 }
@@ -196,15 +228,14 @@ func TestTestnetDeprecatedTestnetAccount(t *testing.T) {
 	check(t, acctFromSeed, testnetDeprecatedAccount)
 
 	for i, lang := range langCheckSequence {
-		if i >= len(testnetDeprecatedAccount.phrases) {
-			break
+		if i < len(testnetDeprecatedAccount.phrases) {
+			phrase := strings.Split(testnetDeprecatedAccount.phrases[i], " ")
+			acctFromPhrase, err := FromRecoveryPhrase(phrase, lang)
+			if err != nil {
+				t.Fatalf("failed to recover from phrase: %s", err)
+			}
+			check(t, acctFromPhrase, testnetDeprecatedAccount)
 		}
-		phrase := strings.Split(testnetDeprecatedAccount.phrases[i], " ")
-		acctFromPhrase, err := FromRecoveryPhrase(phrase, lang)
-		if err != nil {
-			t.Fatalf("failed to recover from phrase: %s", err)
-		}
-		check(t, acctFromPhrase, testnetDeprecatedAccount)
 	}
 }
 
@@ -218,43 +249,50 @@ func TestTestnetDeprecatedLivenetAccount(t *testing.T) {
 	check(t, acctFromSeed, livenetDeprecatedAccount)
 
 	for i, lang := range langCheckSequence {
-		if i >= len(livenetDeprecatedAccount.phrases) {
-			break
+		if i < len(livenetDeprecatedAccount.phrases) {
+			phrase := strings.Split(livenetDeprecatedAccount.phrases[i], " ")
+			acctFromPhrase, err := FromRecoveryPhrase(phrase, lang)
+			if err != nil {
+				t.Fatalf("failed to recover from phrase: %s", err)
+			}
+			check(t, acctFromPhrase, livenetDeprecatedAccount)
 		}
-		phrase := strings.Split(livenetDeprecatedAccount.phrases[i], " ")
-		acctFromPhrase, err := FromRecoveryPhrase(phrase, lang)
-		if err != nil {
-			t.Fatalf("failed to recover from phrase: %s", err)
-		}
-		check(t, acctFromPhrase, livenetDeprecatedAccount)
 	}
 }
 
 func TestValidateAccountNumber(t *testing.T) {
 	sdk.Init(&sdk.Config{Network: sdk.Testnet})
 
-	err := ValidateAccountNumber(testnetAccount.accountNumber)
+	for _, acc := range testnetAccounts {
+		err := ValidateAccountNumber(acc.accountNumber)
+		assert.NoError(t, err)
+	}
+
+	err := ValidateAccountNumber(testnetDeprecatedAccount.accountNumber)
 	assert.NoError(t, err)
 
-	err = ValidateAccountNumber(testnetDeprecatedAccount.accountNumber)
-	assert.NoError(t, err)
-
-	err = ValidateAccountNumber(livenetAccount.accountNumber)
-	assert.EqualError(t, err, ErrWrongNetwork.Error())
+	for _, acc := range livenetAccounts {
+		err := ValidateAccountNumber(acc.accountNumber)
+		assert.EqualError(t, err, ErrWrongNetwork.Error())
+	}
 
 	err = ValidateAccountNumber(livenetDeprecatedAccount.accountNumber)
 	assert.EqualError(t, err, ErrWrongNetwork.Error())
 
 	sdk.Init(&sdk.Config{Network: sdk.Livenet})
 
-	err = ValidateAccountNumber(testnetAccount.accountNumber)
-	assert.EqualError(t, err, ErrWrongNetwork.Error())
+	for _, acc := range testnetAccounts {
+		err := ValidateAccountNumber(acc.accountNumber)
+		assert.EqualError(t, err, ErrWrongNetwork.Error())
+	}
 
 	err = ValidateAccountNumber(testnetDeprecatedAccount.accountNumber)
 	assert.EqualError(t, err, ErrWrongNetwork.Error())
 
-	err = ValidateAccountNumber(livenetAccount.accountNumber)
-	assert.NoError(t, err)
+	for _, acc := range livenetAccounts {
+		err := ValidateAccountNumber(acc.accountNumber)
+		assert.NoError(t, err)
+	}
 
 	err = ValidateAccountNumber(livenetDeprecatedAccount.accountNumber)
 	assert.NoError(t, err)
@@ -279,12 +317,15 @@ func TestRecoverV1Account(t *testing.T) {
 func TestVerify(t *testing.T) {
 	sdk.Init(&sdk.Config{Network: sdk.Testnet})
 
-	acct, err := FromSeed(testnetAccount.seed)
-	assert.NoError(t, err)
+	for _, acc := range testnetAccounts {
 
-	msg := []byte("Hello, world!")
-	sig := acct.Sign(msg)
+		acct, err := FromSeed(acc.seed)
+		assert.NoError(t, err)
 
-	err = Verify(acct.AccountNumber(), msg, sig)
-	assert.NoError(t, err)
+		msg := []byte("Hello, world!")
+		sig := acct.Sign(msg)
+
+		err = Verify(acct.AccountNumber(), msg, sig)
+		assert.NoError(t, err)
+	}
 }
