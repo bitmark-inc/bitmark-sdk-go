@@ -12,9 +12,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/bitmark-sdk-go/utils"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestRegisterAsset(t *testing.T) {
@@ -89,7 +90,7 @@ func TestGetAsset(t *testing.T) {
 		Status:      "confirmed",
 		BlockNumber: 26830,
 		Offset:      450434,
-		CreatedAt:   &createdAt,
+		CreatedAt:   createdAt,
 	})
 	assert.NoError(t, err)
 }
