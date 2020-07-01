@@ -11,7 +11,7 @@ The official Bitmark SDK for Golang
 
 ### Prerequisites
 
-- Golang version 1.10+
+- Golang version 1.13+
 
 ### Installing
 
@@ -22,11 +22,6 @@ In `go.mod` file:
 require (
 	github.com/bitmark-inc/bitmark-sdk-go
 )
-```
-
-#### Go Vendor
-```sh
-govendor fetch github.com/bitmark-inc/bitmark-sdk-go
 ```
 
 #### Manually
