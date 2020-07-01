@@ -80,32 +80,33 @@ func twentyFourWordsToBytes(words []string, dict []string) ([]byte, error) {
 	return databytes, nil
 }
 
-// 17.5 bytes to 12 words
-func bytesToTwelveWords(input []byte, dict []string) ([]string, error) {
-	phrase := make([]string, 0, 12)
-	accumulator := 0
-	bits := 0
-	n := 0
-	for i := 0; i < len(input); i++ {
-		accumulator = accumulator<<8 + int(input[i])
-		bits += 8
-		if bits >= 11 {
-			bits -= 11 // [ 11 bits] [offset bits]
-
-			n++
-			index := accumulator >> uint(bits)
-			accumulator &= masks[bits]
-
-			phrase = append(phrase, dict[index])
-		}
-	}
-
-	if 12 != len(phrase) {
-		return nil, fmt.Errorf("only %d words expected 12", len(phrase))
-	}
-
-	return phrase, nil
-}
+// currently not accessible - commented out to pass CI lint
+// // 17.5 bytes to 12 words
+// func bytesToTwelveWords(input []byte, dict []string) ([]string, error) {
+// 	phrase := make([]string, 0, 12)
+// 	accumulator := 0
+// 	bits := 0
+// 	n := 0
+// 	for i := 0; i < len(input); i++ {
+// 		accumulator = accumulator<<8 + int(input[i])
+// 		bits += 8
+// 		if bits >= 11 {
+// 			bits -= 11 // [ 11 bits] [offset bits]
+//
+// 			n++
+// 			index := accumulator >> uint(bits)
+// 			accumulator &= masks[bits]
+//
+// 			phrase = append(phrase, dict[index])
+// 		}
+// 	}
+//
+// 	if 12 != len(phrase) {
+// 		return nil, fmt.Errorf("only %d words expected 12", len(phrase))
+// 	}
+//
+// 	return phrase, nil
+// }
 
 // 12 words to 17.5 bytes
 func twelveWordsToBytes(words []string, dict []string) ([]byte, error) {

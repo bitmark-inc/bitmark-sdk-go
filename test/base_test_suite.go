@@ -24,8 +24,6 @@ type BaseTestSuite struct {
 	receiver account.Account
 
 	bitmarkIndex int
-	bitmarkCount int
-	bitmarkIDs   []string
 }
 
 func (s *BaseTestSuite) SetupSuite() {
