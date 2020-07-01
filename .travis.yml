@@ -6,14 +6,12 @@ notifications:
 language: go
 
 go:
-  - 1.11.x
-env:
-  - GO111MODULE=on
+  - 1.14.x
 
 before_script:
   - go get -v golang.org/x/lint/golint
-  - go get -u github.com/client9/misspell/cmd/misspell
-  - go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+  - go get -v github.com/client9/misspell/cmd/misspell
+  - go get -v github.com/golangci/golangci-lint/cmd/golangci-lint
 
 script:
   - golint ./...

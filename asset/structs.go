@@ -15,5 +15,5 @@ type Asset struct {
 	Status      string            `json:"status"`
 	BlockNumber int               `json:"block_number"`
 	Offset      int               `json:"offset"`
-	CreatedAt   *time.Time        `json:"created_at"`
+	CreatedAt   time.Time         `json:"created_at"`
 }
