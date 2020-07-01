@@ -17,6 +17,9 @@ import (
 
 type GiveawayTestSuite struct {
 	BaseTestSuite
+
+	bitmarkCount int
+	bitmarkIDs   []string
 }
 
 func NewGiveawayTestSuite(bitmarkCount int) *GiveawayTestSuite {
@@ -57,9 +60,10 @@ func (s *GiveawayTestSuite) TestCountersignedTransfer() {
 	s.mustCreateOffer(bitmarkID) // able to create a transfer offer right after the bitmark is issued
 	s.verifyBitmark(bitmarkID, s.sender.AccountNumber(), "issuing")
 
+loop:
 	for {
 		if s.txsAreReady([]string{bitmarkID}) {
-			break
+			break loop
 		}
 		time.Sleep(15 * time.Second)
 	}

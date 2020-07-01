@@ -18,6 +18,9 @@ import (
 
 type OwnershipTestSuite struct {
 	BaseTestSuite
+
+	bitmarkCount int
+	bitmarkIDs   []string
 }
 
 func NewOwnershipTestSuite(bitmarkCount int) *OwnershipTestSuite {
@@ -42,9 +45,10 @@ func (s *OwnershipTestSuite) SetupSuite() {
 	assetID := s.mustRegisterAsset("", []byte(time.Now().String()))
 	s.bitmarkIDs = s.mustIssueBitmarks(assetID, s.bitmarkCount)
 
+loop:
 	for {
 		if s.txsAreReady(s.bitmarkIDs) {
-			break
+			break loop
 		}
 		time.Sleep(15 * time.Second)
 	}
