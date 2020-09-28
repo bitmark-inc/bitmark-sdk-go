@@ -1,5 +1,9 @@
 # Changelog for Bitmark SDK for Golang
 
+## 2.1.1
+### Improvements:
+- Calculate fingerprint from `io.Reader`
+
 ## 2.1.0
 ### Features:
 - Account: create new account, generate Recovery Phrase, recover account from Recovery Phrase

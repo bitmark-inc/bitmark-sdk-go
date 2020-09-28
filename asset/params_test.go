@@ -5,9 +5,11 @@
 package asset
 
 import (
-	"github.com/stretchr/testify/assert"
+	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/bitmark-sdk-go/account"
@@ -49,6 +51,20 @@ func TestSetFingerprintFromData(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = params.SetFingerprintFromData([]byte("hello world"))
+	assert.NoError(t, err)
+	assert.Equal(t, params.Fingerprint, "01840006653e9ac9e95117a15c915caab81662918e925de9e004f774ff82d7079a40d4d27b1b372657c61d46d470304c88c788b3a4527ad074d1dccbee5dbaa99a")
+
+	err = params.SetFingerprintFromData(nil)
+	assert.Error(t, err, ErrEmptyContent.Error())
+}
+
+func TestSetFingerprintFromReader(t *testing.T) {
+	r := bytes.NewReader([]byte("hello world"))
+
+	params, err := NewRegistrationParams("", nil)
+	assert.NoError(t, err)
+
+	err = params.SetFingerprintFromReader(r)
 	assert.NoError(t, err)
 	assert.Equal(t, params.Fingerprint, "01840006653e9ac9e95117a15c915caab81662918e925de9e004f774ff82d7079a40d4d27b1b372657c61d46d470304c88c788b3a4527ad074d1dccbee5dbaa99a")
 
