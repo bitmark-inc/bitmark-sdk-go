@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"sort"
 	"strings"
@@ -81,6 +82,17 @@ func (r *RegistrationParams) SetFingerprintFromFile(name string) error {
 	}
 
 	return r.SetFingerprintFromData(content)
+}
+
+func (r *RegistrationParams) SetFingerprintFromReader(reader io.Reader) error {
+	h := sha3.New512()
+	if _, err := io.Copy(h, reader); err != nil {
+		return err
+	}
+
+	digest := h.Sum(nil)
+	r.Fingerprint = fmt.Sprintf("%02d%s", fingerprintTypeSHA3512, hex.EncodeToString(digest[:]))
+	return nil
 }
 
 func (r *RegistrationParams) SetFingerprintFromData(content []byte) error {
