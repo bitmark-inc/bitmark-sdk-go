@@ -5,6 +5,7 @@
 package asset
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -27,6 +28,7 @@ const (
 const (
 	fingerprintTypeUserDefined = iota
 	fingerprintTypeSHA3512
+	fingerprintTypeMerkleTree
 )
 
 var (
@@ -92,6 +94,60 @@ func (r *RegistrationParams) SetFingerprintFromReader(reader io.Reader) error {
 
 	digest := h.Sum(nil)
 	r.Fingerprint = fmt.Sprintf("%02d%s", fingerprintTypeSHA3512, hex.EncodeToString(digest[:]))
+	return nil
+}
+
+func (r *RegistrationParams) SetFingerprintFromReaders(readers []io.Reader) error {
+
+	if nil == readers || len(readers) == 0 {
+		return ErrEmptyContent
+	}
+
+	length := len(readers)
+	hashes := make([][]byte, length)
+
+	for i := 0; i < length; i++ {
+		h := sha3.New512()
+		if _, err := io.Copy(h, readers[i]); err != nil {
+			return err
+		}
+
+		digest := h.Sum(nil)
+		hashes[i] = digest
+	}
+
+	return r.setFingerprintFromHashes(hashes)
+}
+
+func (r *RegistrationParams) SetFingerprintFromDataArray(contents [][]byte) error {
+	if nil == contents || len(contents) == 0 {
+		return ErrEmptyContent
+	}
+
+	length := len(contents)
+	hashes := make([][]byte, length)
+
+	for i := 0; i < length; i++ {
+		hash := sha3.Sum512(contents[i])
+		hashes[i] = hash[:]
+	}
+
+	return r.setFingerprintFromHashes(hashes)
+}
+
+func (r *RegistrationParams) setFingerprintFromHashes(hashes [][]byte) error {
+	tree := buildMerkleTree(hashes, func(left, right []byte) []byte {
+		data := append(left, right...)
+		hash := sha3.Sum512(data)
+		return hash[:]
+	})
+
+	if len(tree) == 0 {
+		return errors.New("could not build merkle tree")
+	}
+
+	root := tree[len(tree)-1]
+	r.Fingerprint = fmt.Sprintf("%02d%s", fingerprintTypeMerkleTree, base64.StdEncoding.EncodeToString(root))
 	return nil
 }
 
