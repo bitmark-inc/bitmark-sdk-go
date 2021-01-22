@@ -5,6 +5,7 @@
 package asset
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
@@ -136,6 +137,10 @@ func (r *RegistrationParams) SetFingerprintFromDataArray(contents [][]byte) erro
 }
 
 func (r *RegistrationParams) setFingerprintFromHashes(hashes [][]byte) error {
+
+	// sort hash array by ascending order
+	sort.Slice(hashes, func(i, j int) bool { return bytes.Compare(hashes[i], hashes[j]) == -1 })
+
 	tree := buildMerkleTree(hashes, func(left, right []byte) []byte {
 		data := append(left, right...)
 		hash := sha3.Sum512(data)

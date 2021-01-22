@@ -89,9 +89,13 @@ func TestSetFingerprintFromDataArrays(t *testing.T) {
 	params, err := NewRegistrationParams("", nil)
 	assert.NoError(t, err)
 
-	err = params.SetFingerprintFromDataArray([][]byte{[]byte("hello world"), []byte("this is a test case"), []byte("bitmark golang sdk")})
+	err = params.SetFingerprintFromDataArray([][]byte{
+		[]byte("hello world"),
+		[]byte("this is a test case"),
+		[]byte("bitmark sdk"),
+	})
 	assert.NoError(t, err)
-	assert.Equal(t, params.Fingerprint, "02ebzLDfLZ3j0VPfLh6n8ggb7Tp0Y4G0rLCeGqa7EgbRyqngnz1crLgHotJXpgKMZOupxm2YiuTbIQSTJ0UjC5hQ==")
+	assert.Equal(t, params.Fingerprint, "02DrQYWKFmh9APficsuetD/TlVwa5z4x3OoFVjk3f12RaRy8Wx3OhRTTVMLZPGImmgxZawOf++Xegq8t2p6pHe9w==")
 
 	err = params.SetFingerprintFromDataArray([][]byte{})
 	assert.Error(t, err, ErrEmptyContent.Error())
@@ -104,9 +108,13 @@ func TestSetFingerprintFromReaders(t *testing.T) {
 	params, err := NewRegistrationParams("", nil)
 	assert.NoError(t, err)
 
-	err = params.SetFingerprintFromReaders([]io.Reader{bytes.NewReader([]byte("hello world")), bytes.NewReader([]byte("this is a test case")), bytes.NewReader([]byte("bitmark golang sdk"))})
+	err = params.SetFingerprintFromReaders([]io.Reader{
+		bytes.NewReader([]byte("hello world")),
+		bytes.NewReader([]byte("this is a test case")),
+		bytes.NewReader([]byte("bitmark sdk")),
+	})
 	assert.NoError(t, err)
-	assert.Equal(t, params.Fingerprint, "02ebzLDfLZ3j0VPfLh6n8ggb7Tp0Y4G0rLCeGqa7EgbRyqngnz1crLgHotJXpgKMZOupxm2YiuTbIQSTJ0UjC5hQ==")
+	assert.Equal(t, params.Fingerprint, "02DrQYWKFmh9APficsuetD/TlVwa5z4x3OoFVjk3f12RaRy8Wx3OhRTTVMLZPGImmgxZawOf++Xegq8t2p6pHe9w==")
 
 	err = params.SetFingerprintFromReaders([]io.Reader{})
 	assert.Error(t, err, ErrEmptyContent.Error())
